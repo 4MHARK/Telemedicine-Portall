@@ -10,6 +10,7 @@ import { createBrowserRouter, Outlet, redirect, useLocation } from 'react-router
 import type { LoaderFunctionArgs, RouteObject } from 'react-router'
 
 import { RootLayout } from '@/app/layout'
+import { RouteBoundary, RouteErrorPage } from '@/app/route-error'
 import { LoadingSkeleton } from '@/components/shared'
 import { isTokenUsable } from '@/lib/jwt'
 import { readToken } from '@/lib/session'
@@ -77,32 +78,42 @@ export const routes: RouteObject[] = [
     path: '/',
     element: <RootRoute />,
     children: [
-      // The loader always throws a redirect, so this element never paints.
-      // It exists because React Router warns about a leaf route with no
-      // element, and a clean console matters for the browser checks.
-      { index: true, loader: redirectFromRoot, element: <LoadingSkeleton variant="detail" /> },
+      {
+        // Pathless: render errors are caught by react-error-boundary, loader
+        // and thrown-response errors by the router's errorElement. Because
+        // this route has no path, both render in the Outlet slot and the shell
+        // survives.
+        element: <RouteBoundary />,
+        errorElement: <RouteErrorPage />,
+        children: [
+          // The loader always throws a redirect, so this element never paints.
+          // It exists because React Router warns about a leaf route with no
+          // element, and a clean console matters for the browser checks.
+          { index: true, loader: redirectFromRoot, element: <LoadingSkeleton variant="detail" /> },
 
-      { path: 'auth/login', element: <LoginPage />, loader: redirectIfAuthenticated },
+          { path: 'auth/login', element: <LoginPage />, loader: redirectIfAuthenticated },
 
-      { path: 'doctors', element: <DoctorsListPage /> },
-      { path: 'doctors/:providerId', element: <DoctorDetailPage /> },
+          { path: 'doctors', element: <DoctorsListPage /> },
+          { path: 'doctors/:providerId', element: <DoctorDetailPage /> },
 
-      // routes.md's route table puts the wizard at /schedule/:providerId, while
-      // its route tree nests it under doctors. The table wins here; the
-      // contradiction is reported.
-      { path: 'schedule/:providerId', element: <SchedulePage />, loader: requireAuth },
+          // routes.md's route table puts the wizard at /schedule/:providerId, while
+          // its route tree nests it under doctors. The table wins here; the
+          // contradiction is reported.
+          { path: 'schedule/:providerId', element: <SchedulePage />, loader: requireAuth },
 
-      { path: 'appointments', element: <AppointmentsPage />, loader: requireAuth },
-      { path: 'appointments/:id', element: <AppointmentDetailPage />, loader: requireAuth },
+          { path: 'appointments', element: <AppointmentsPage />, loader: requireAuth },
+          { path: 'appointments/:id', element: <AppointmentDetailPage />, loader: requireAuth },
 
-      { path: 'documents', element: <DocumentsPage />, loader: requireAuth },
+          { path: 'documents', element: <DocumentsPage />, loader: requireAuth },
 
-      { path: 'messages', element: <MessagesPage />, loader: requireAuth },
-      { path: 'messages/:conversationId', element: <ConversationPage />, loader: requireAuth },
+          { path: 'messages', element: <MessagesPage />, loader: requireAuth },
+          { path: 'messages/:conversationId', element: <ConversationPage />, loader: requireAuth },
 
-      { path: 'profile', element: <ProfilePage />, loader: requireAuth },
+          { path: 'profile', element: <ProfilePage />, loader: requireAuth },
 
-      { path: '*', element: <NotFoundPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 ]

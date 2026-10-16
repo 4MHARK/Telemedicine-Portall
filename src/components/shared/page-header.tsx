@@ -12,7 +12,10 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
   return (
-    <header
+    // A <div>, not a <header>: a <header> that is not scoped to article/aside/
+    // nav/section maps to the `banner` landmark role, which would give every
+    // page a second banner alongside the app header.
+    <div
       className={cn('flex flex-wrap items-start justify-between gap-4 pb-6', className)}
       data-slot="page-header"
     >
@@ -21,6 +24,6 @@ export function PageHeader({ title, description, actions, className }: PageHeade
         {description ? <p className="text-text-muted text-sm">{description}</p> : null}
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
-    </header>
+    </div>
   )
 }
