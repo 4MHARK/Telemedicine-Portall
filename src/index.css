@@ -1,8 +1,38 @@
-:root {
-  color-scheme: light dark;
-}
+@import 'tailwindcss';
+@import './styles/theme.css';
 
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
+/* Class-based dark mode: the theme provider toggles `.dark` on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-size: var(--text-base);
+    line-height: 1.5;
+  }
+
+  /* Focus ring is a token — every interactive element opts in with
+     focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
