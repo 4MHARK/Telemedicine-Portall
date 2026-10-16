@@ -29,7 +29,9 @@ export default function App() {
   return (
     <main className="bg-surface text-text min-h-screen p-8">
       <h1 className="text-2xl font-semibold">Telemedicine Portal</h1>
-      <p className="text-text-muted mt-2">Primitive smoke surface — features land in later steps.</p>
+      <p className="text-text-muted mt-2">
+        Primitive smoke surface — features land in later steps.
+      </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <Button>Primary</Button>
