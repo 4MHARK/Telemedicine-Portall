@@ -1,3 +1,5 @@
+import { Link } from 'react-router'
+
 import { cn } from '@/lib/utils'
 import { isNavItemActive, NAV_ITEMS } from './nav-items'
 
@@ -15,9 +17,9 @@ export function IconRail({ currentPath }: { currentPath: string }) {
       {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
         const active = isNavItemActive(currentPath, to)
         return (
-          <a
+          <Link
             key={to}
-            href={to}
+            to={to}
             title={label}
             aria-label={label}
             aria-current={active ? 'page' : undefined}
@@ -29,7 +31,7 @@ export function IconRail({ currentPath }: { currentPath: string }) {
             )}
           >
             <Icon className="size-5" aria-hidden="true" />
-          </a>
+          </Link>
         )
       })}
     </nav>

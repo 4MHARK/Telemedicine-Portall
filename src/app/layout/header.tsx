@@ -1,4 +1,5 @@
 import { LogIn, Moon, Sun } from 'lucide-react'
+import { Link } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -30,8 +31,8 @@ export function Header() {
   return (
     <header className="border-border bg-surface/95 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-4 px-4 lg:px-6">
-        <a
-          href="/doctors"
+        <Link
+          to="/doctors"
           className="flex items-center gap-2 font-semibold tracking-tight"
           aria-label="Telemedicine Portal home"
         >
@@ -39,7 +40,7 @@ export function Header() {
             T
           </span>
           <span className="hidden sm:inline">Telemedicine Portal</span>
-        </a>
+        </Link>
 
         <div className="ml-auto flex items-center gap-1">
           <Button
@@ -89,7 +90,7 @@ export function Header() {
                     </span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem render={<a href="/profile" />}>Profile</DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to="/profile" />}>Profile</DropdownMenuItem>
                 </DropdownMenuGroup>
               ) : (
                 <DropdownMenuGroup>
@@ -100,7 +101,7 @@ export function Header() {
                     </span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem render={<a href="/auth/login" />}>Sign in</DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to="/auth/login" />}>Sign in</DropdownMenuItem>
                 </DropdownMenuGroup>
               )}
             </DropdownMenuContent>

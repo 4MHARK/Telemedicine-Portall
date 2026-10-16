@@ -1,3 +1,5 @@
+import { Link } from 'react-router'
+
 import { cn } from '@/lib/utils'
 import { isNavItemActive, NAV_ITEMS } from './nav-items'
 
@@ -14,8 +16,8 @@ export function SideNav({ currentPath }: { currentPath: string }) {
           const active = isNavItemActive(currentPath, to)
           return (
             <li key={to}>
-              <a
-                href={to}
+              <Link
+                to={to}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
@@ -26,7 +28,7 @@ export function SideNav({ currentPath }: { currentPath: string }) {
               >
                 <Icon className="size-4 shrink-0" aria-hidden="true" />
                 {label}
-              </a>
+              </Link>
             </li>
           )
         })}

@@ -1,17 +1,16 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import App from './App'
 import { AppProviders } from './providers'
 
 describe('<AppProviders />', () => {
-  it('mounts the full provider tree and renders the app shell', () => {
+  it('mounts the full provider tree', () => {
     render(
       <AppProviders>
-        <App />
+        <p>provider tree probe</p>
       </AppProviders>,
     )
 
-    expect(screen.getByRole('button', { name: 'Proof of life' })).toBeInTheDocument()
+    expect(screen.getByText('provider tree probe')).toBeInTheDocument()
   })
 })

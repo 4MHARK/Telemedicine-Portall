@@ -1,3 +1,5 @@
+import { Link } from 'react-router'
+
 import { cn } from '@/lib/utils'
 import { isNavItemActive, NAV_ITEMS } from './nav-items'
 
@@ -14,8 +16,8 @@ export function BottomNav({ currentPath }: { currentPath: string }) {
           const active = isNavItemActive(currentPath, to)
           return (
             <li key={to} className="flex-1">
-              <a
-                href={to}
+              <Link
+                to={to}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'flex flex-col items-center gap-1 py-2 text-[0.6875rem] transition-colors',
@@ -24,7 +26,7 @@ export function BottomNav({ currentPath }: { currentPath: string }) {
               >
                 <Icon className="size-5" aria-hidden="true" />
                 {label}
-              </a>
+              </Link>
             </li>
           )
         })}
