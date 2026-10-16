@@ -26,5 +26,14 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
     },
   },
+  {
+    // Registry-generated shadcn primitives export their cva() variants
+    // alongside the component, which the fast-refresh rule flags. These files
+    // are owned by `shadcn add`, not by hand, so the rule is off here.
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
   prettier,
 )
