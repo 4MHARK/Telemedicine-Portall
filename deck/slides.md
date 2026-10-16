@@ -17,14 +17,34 @@ drawings:
 Architecture & Build Plan
 
 ---
-layout: default
+layout: two-cols-header
 ---
 
 # Problem & Scope
 
-- **What it does** — provider search & filtering, a multi-step scheduling wizard, secure document uploads with progress, live chat simulation, mock authentication.
-- **What it doesn't** — no real payments, no real video/audio, no real backend, no real PHI handling, no HIPAA compliance, no notifications or email.
-- **Why mock-only** — every request is intercepted by MSW v2; no network call leaves the browser, so no real patient data is ever at risk.
+::left::
+
+**In scope**
+
+- Provider search & filtering
+- Multi-step scheduling wizard
+- Document uploads with progress
+- Live chat simulation
+- Mock authentication
+
+::right::
+
+**Out of scope**
+
+- Real payments
+- Real video / audio
+- Real backend
+- Real PHI handling & HIPAA compliance
+- Notifications & email
+
+::bottom::
+
+**Why mock-only** — every request is intercepted by MSW v2; no network call leaves the browser, so no real patient data is ever at risk.
 
 ---
 layout: default
@@ -49,18 +69,19 @@ Each stage ships behind the contract frozen in `docs/` — no stage re-opens a l
 layout: default
 ---
 
-# Locked Decisions
+# Locked Decisions (excerpt)
 
-| # | Area | Decision | Revisit if |
-|---|---|---|---|
-| 1 | Forms | react-hook-form + zod; zod owns **form** types only | never |
-| 2 | Entity types | Hand-written in `src/types/*`, **not** inferred from zod | never |
-| 3 | Wizard | Single `useForm` across all steps; `trigger()` gates progression | step isolation becomes hard |
-| 4 | Auth | Mock JWT in `localStorage`; guards via React Router 7 `loader` | real backend |
-| 5 | 401 handling | Global handler in `apiClient` clears session, redirects to login | never |
-| 6 | Upload transport | **XHR** (not `fetch`); Promise wrapper with `onProgress` | never |
-| 7 | Upload state | Progress in Context + Reducer, **not** TanStack Query | never |
-| 8 | Upload mock | DEV: XHR wrapper emits synthetic ticks; MSW resolves | MSW supports progress |
+| # | Area | Decision |
+|---|---|---|
+| 1 | Forms | react-hook-form + zod; zod owns **form** types only |
+| 2 | Entity types | Hand-written in `src/types/*`, **not** inferred from zod |
+| 3 | Wizard | Single `useForm` across all steps; `trigger()` gates progression |
+| 4 | Auth | Mock JWT in `localStorage`; guards via React Router 7 `loader` |
+| 5 | 401 handling | Global handler in `apiClient` clears session, redirects to login |
+| 6 | Upload transport | **XHR** (not `fetch`); Promise wrapper with `onProgress` |
+| 7 | Upload state | Progress in Context + Reducer, **not** TanStack Query |
+
+Seven decisions that constrain Phase 1. Full table (18 rows) in `docs/decisions.md`.
 
 ---
 layout: default
@@ -165,6 +186,8 @@ flowchart TD
   class L,D,DD pub
   class SCH,A,AD,DOC,M,MD,P prot
 ```
+
+Green = public · Red = protected
 
 `requireAuth()` runs in a route `loader` — no flash of protected content.
 
@@ -332,3 +355,11 @@ layout: default
 - **Client** — `apiClient` with the global 401 handler; `queryKeys` centralised in `src/lib/queryKeys.ts`.
 - **Providers** — `auth` / `upload` / `wizard` reducers, each in its own Context with a `use*` hook that throws outside its provider.
 - Spike first: the Base UI component check gates the shell work.
+
+---
+layout: center
+---
+
+# Questions
+
+docs/ · deck/ · git log --oneline

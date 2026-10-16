@@ -80,7 +80,7 @@ Tokens are **semantic**, not literal. Components must never use palette colors (
 
 ## Dark Mode
 
-**Decision:** `<DECIDE: enabled / disabled>`
+**Decision:** enabled. Dark mode ships. The `.dark` block lives in `src/styles/theme.css` — see that file for the values. Every color token has a dark counterpart; non-color tokens (radius, type scale, fonts) are theme-independent.
 
 If enabled, use Tailwind v4's `@variant dark` and re-declare the semantic tokens inside a `.dark` selector. Every token above gets a dark counterpart. Components never branch on theme — only tokens change.
 
