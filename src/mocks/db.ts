@@ -316,6 +316,25 @@ for (const provider of providers) {
 // A handful of blocked slots, so the status is exercised.
 for (const slot of pickSome(slots, 20, 30)) slot.status = 'blocked'
 
+// Imminent slots, so the `availability=now` filter from docs/api-contract.md
+// has something to match whatever time of day the app is opened. Generated
+// relative to the wall clock rather than BASE_MS, and only for providers that
+// do not take part in the no-availability case below.
+const NO_AVAILABILITY_INDEXES = [1, 2] as const
+providers.forEach((provider, i) => {
+  if (i % 3 !== 0 || NO_AVAILABILITY_INDEXES.includes(i as 1 | 2)) return
+  for (const minutes of [30, 75]) {
+    const start = Date.now() + minutes * 60_000
+    slots.push({
+      id: `slot_soon_${provider.id}_${minutes}`,
+      providerId: provider.id,
+      start: iso(start),
+      end: iso(start + 30 * 60_000),
+      status: 'available',
+    })
+  }
+})
+
 // ── Patients (3) ─────────────────────────────────────────────
 
 function makePatient(
@@ -595,6 +614,16 @@ CONVERSATION_SCRIPTS.forEach((script, c) => {
 
 // ── Derived: nextAvailableAt ─────────────────────────────────
 
+// Two providers genuinely have nothing free, so consumers exercise the
+// `nextAvailableAt: null` branch from docs/domain.ts ("null = no availability
+// in the next N days"). Their slots are blocked first, so `null` and the slot
+// data agree rather than contradicting each other.
+for (const index of NO_AVAILABILITY_INDEXES) {
+  for (const slot of slots) {
+    if (slot.providerId === providers[index]?.id) slot.status = 'blocked'
+  }
+}
+
 for (const provider of providers) {
   const next = slots
     .filter(
@@ -605,10 +634,4 @@ for (const provider of providers) {
     )
     .sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0]
   provider.nextAvailableAt = next?.start ?? null
-}
-
-// Two providers deliberately have no availability, so consumers exercise the
-// `nextAvailableAt: null` branch from docs/domain.ts.
-for (const provider of providers.slice(0, 2)) {
-  provider.nextAvailableAt = null
 }
