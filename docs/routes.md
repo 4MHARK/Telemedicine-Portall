@@ -26,9 +26,8 @@ Router: React Router 7 (data router). Guards via route `loader`, not wrapper com
 ├── auth/
 │   └── login                       public
 ├── doctors                         public
-│   ├── :providerId                 public
-│   └── :providerId/schedule        protected   ← wizard lives under provider
-├── appointments                    protected
+│   └── :providerId                 public
+├── schedule/:providerId            protected   ← wizard (see route table)├── appointments                    protected
 │   └── :id                         protected
 ├── documents                       protected
 ├── messages                        protected

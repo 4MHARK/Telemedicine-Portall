@@ -31,6 +31,20 @@ Every decision here is frozen for the duration of the project. Reopening one req
 | 17 | Git | `main` protected, `develop` integration, `feature/*` per slice | clean history, reviewable PRs | never |
 | 18 | Commits | Conventional Commits enforced via commitlint + husky | machine-readable history; auto-generated changelogs later | never |
 | 19 | Form primitive | shadcn `field` (Base UI), not `form` | `form` has no Base UI port in shadcn's current registry; `field` is the official successor | `field` deprecated or removed |
+| 20 | Public data endpoints | `/specialties` and `/providers*` are unauthenticated | routes.md marks `/doctors` public — public routes need public data endpoints, or anonymous visitors bounce to login | never |
+| 21 | Wizard path | `/schedule/:providerId` (top-level, not nested under `/doctors`) | routes.md table says `/schedule/:providerId`; the tree's alternative variant is a typo | never |
+| 22 | Availability windows | `now` = 2h, `today` = 24h, `week` = 7d (rolling from now) | api-contract.md defined the enum but not the bounds | never |
+| 23 | Multi-specialty filter | OR — any selected specialty matches | standard filter semantics | never |
+| 24 | Slots missing from/to | 422 VALIDATION with fieldErrors | api-contract.md marks them required but specifies no error | never |
+| 25 | Appointment unknown refs | 404 NOT_FOUND for unknown providerId or slotId | api-contract.md doesn't cover it | never |
+| 26 | Provider pagination | `/doctors` shows page 1 (12 of 40); pagination controls in Phase 3 | api-contract.md default pageSize is 12 | never |
+| 27 | Form validation depth | presence-only; no email-format rule | mock API accepts any non-empty credentials | real backend |
+| 28 | Zod major | ^3.25.76, not 4 | @hookform/resolvers peers on zod ^3.23.8 | resolvers supports zod 4 |
+| 29 | shadcn as runtime dep | stays in dependencies, not devDependencies | src/index.css imports shadcn/tailwind.css at build time | shadcn ships a build-time-only package |
+| 30 | Session storage | localStorage key `telemedicine-portal:session`; `?next` restricted to same-origin paths | prevents open redirect | never |
+| 31 | Test timeout | 15s (not default 5s) | MSW's mandated 200–600ms latency makes the 5s default unreachable | MSW latency removed |
+| 32 | Base UI dropdown-menu | added as a needed primitive | account menu requires it | never |
+| 33 | `field` upload test caveat | `fail-*` rule is verified in browser, not jsdom | jsdom File cross-realm serializes filename as "blob"; needs Playwright | Phase 3 adds Playwright E2E |
 
 ## Testing Coverage Targets
 
@@ -42,6 +56,7 @@ Every decision here is frozen for the duration of the project. Reopening one req
 | `src/features/**/api.ts` | 80% |
 | `src/components/primitives/**` | no threshold |
 | Everything else | no global minimum |
+Note: overall statement coverage is 73.31%. Per-directory thresholds all pass. Chat's hooks (44.44%) are unreachable until the Messages page exists (Phase 3).
 
 ## E2E Flows (Playwright)
 
