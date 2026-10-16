@@ -6,8 +6,8 @@
 import { delay, HttpResponse } from 'msw'
 
 import type { ApiErrorBody, UUID } from '@/types'
+import { decodeToken, isTokenValid } from '@/lib/jwt'
 import { patients } from '../db'
-import { decodeToken, isTokenValid } from '../token'
 
 /**
  * docs/api-contract.md, Simulated Conditions: 200–600 ms of random latency on
