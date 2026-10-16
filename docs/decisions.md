@@ -30,6 +30,7 @@ Every decision here is frozen for the duration of the project. Reopening one req
 | 16 | E2E | Playwright added to stack | required for auth / upload / chat flows | never |
 | 17 | Git | `main` protected, `develop` integration, `feature/*` per slice | clean history, reviewable PRs | never |
 | 18 | Commits | Conventional Commits enforced via commitlint + husky | machine-readable history; auto-generated changelogs later | never |
+| 19 | Form primitive | shadcn `field` (Base UI), not `form` | `form` has no Base UI port in shadcn's current registry; `field` is the official successor | `field` deprecated or removed |
 
 ## Testing Coverage Targets
 
