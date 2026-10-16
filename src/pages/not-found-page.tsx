@@ -1,8 +1,11 @@
 import { Compass } from 'lucide-react'
 
 import { EmptyState, PageHeader } from '@/components/shared'
+import { usePageTitle } from '@/hooks/use-page-title'
 
 export default function NotFoundPage() {
+  usePageTitle('Page not found')
+
   return (
     <>
       <PageHeader title="Page not found" />

@@ -1,6 +1,7 @@
 import { Hammer } from 'lucide-react'
 
 import { EmptyState, PageHeader } from '@/components/shared'
+import { usePageTitle } from '@/hooks/use-page-title'
 
 export interface ComingSoonProps {
   title: string
@@ -12,6 +13,8 @@ export interface ComingSoonProps {
  * Phase 3 owns renders this rather than a bare "TODO".
  */
 export function ComingSoon({ title, description }: ComingSoonProps) {
+  usePageTitle(title)
+
   return (
     <>
       <PageHeader title={title} description={description} />
