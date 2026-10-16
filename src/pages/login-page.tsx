@@ -1,27 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useSearchParams } from 'react-router'
-import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { useLogin } from '@/features/auth'
+import { loginSchema } from '@/features/auth/schemas'
+import type { LoginValues } from '@/features/auth/schemas'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { ApiError } from '@/lib/apiClient'
-
-/**
- * docs/api-contract.md: "any non-empty credentials succeed", and the only
- * failure is 401 INVALID_CREDENTIALS. The schema therefore checks presence
- * rather than shape — requiring an email format would reject input the mock
- * API accepts.
- */
-const loginSchema = z.object({
-  email: z.string().min(1, 'Enter your email address.'),
-  password: z.string().min(1, 'Enter your password.'),
-})
-
-type LoginValues = z.infer<typeof loginSchema>
 
 /** Only same-origin paths, so ?next cannot be used as an open redirect. */
 function safeNext(value: string | null): string {
