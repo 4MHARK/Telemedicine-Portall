@@ -1,3 +1,6 @@
 export { AuthProvider } from './auth-provider'
 export { useAuth } from './auth-context'
 export type { AuthContextValue, AuthStatus } from './auth-context'
+export { fetchMe, login, logout } from './api'
+export type { LoginCredentials } from './api'
+export { useLogin, useLogout, useMe } from './queries'
