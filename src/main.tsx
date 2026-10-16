@@ -5,6 +5,7 @@ import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
 import '@fontsource/inter/600.css'
 
+import { AppProviders } from '@/app/providers'
 import App from '@/app/App'
 
 import './index.css'
@@ -14,6 +15,8 @@ if (!rootElement) throw new Error('Root element #root not found')
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <AppProviders>
+      <App />
+    </AppProviders>
   </StrictMode>,
 )
