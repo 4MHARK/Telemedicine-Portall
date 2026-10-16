@@ -25,7 +25,7 @@ Every decision here is frozen for the duration of the project. Reopening one req
 | 11 | Chat perf | `React.memo` on `<MessageBubble>`; stable keys | 3s polling on long threads causes visible jank without it | never |
 | 12 | UI kit | shadcn/ui with **Base UI** primitives | per project requirements | a needed component has no Base UI port → fallback to Radix for that component only, documented |
 | 13 | Breakpoints | Tailwind v4 defaults: `md: 768px`, `lg: 1024px`, `xl: 1280px` | already match the spec; no override needed | never |
-| 14 | Dark mode | **<DECIDE: yes / no>** | must be locked before design tokens | post-Phase 1 |
+| 14 | Dark mode | **enabled** | locked before the token layer, so every color token ships a dark counterpart | never |
 | 15 | Coverage | Per-directory thresholds, **not** global | protects signal; global thresholds encourage testing presentational wrappers | never |
 | 16 | E2E | Playwright added to stack | required for auth / upload / chat flows | never |
 | 17 | Git | `main` protected, `develop` integration, `feature/*` per slice | clean history, reviewable PRs | never |
