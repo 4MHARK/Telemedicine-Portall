@@ -6,7 +6,10 @@ import { RouterProvider, createMemoryRouter } from 'react-router'
 
 import { routes } from '@/app/router'
 import { AuthProvider } from '@/features/auth'
-import { UploadProvider } from '@/features/documents'
+// Direct path, not the barrel: the barrel re-exports DocumentsPage, and
+// importing it here would pull the page into the main chunk and defeat the
+// router's lazy import.
+import { UploadProvider } from '@/features/documents/UploadProvider'
 import { ThemeProvider } from '@/features/theme'
 import { encodeJwt } from '@/lib/jwt'
 import { writeSession } from '@/lib/session'
