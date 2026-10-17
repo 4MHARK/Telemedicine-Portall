@@ -22,3 +22,12 @@ export function formatAvailability(value: string | null): string {
 export function formatRating(rating: number): string {
   return rating.toFixed(1)
 }
+
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB'] as const
+  const exponent = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)))
+  const unit = units[exponent] ?? 'B'
+  const value = bytes / 1024 ** exponent
+  return `${exponent === 0 ? Math.round(value) : value.toFixed(1)} ${unit}`
+}

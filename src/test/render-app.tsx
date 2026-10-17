@@ -6,6 +6,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router'
 
 import { routes } from '@/app/router'
 import { AuthProvider } from '@/features/auth'
+import { UploadProvider } from '@/features/documents'
 import { ThemeProvider } from '@/features/theme'
 import { encodeJwt } from '@/lib/jwt'
 import { writeSession } from '@/lib/session'
@@ -64,9 +65,11 @@ export function renderApp(initialPath = '/', { authed = false }: RenderAppOption
       <UnheadProvider head={createHead()}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ThemeProvider>
-              <RouterProvider router={router} />
-            </ThemeProvider>
+            <UploadProvider>
+              <ThemeProvider>
+                <RouterProvider router={router} />
+              </ThemeProvider>
+            </UploadProvider>
           </AuthProvider>
         </QueryClientProvider>
       </UnheadProvider>

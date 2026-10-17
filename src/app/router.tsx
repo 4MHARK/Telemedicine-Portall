@@ -21,7 +21,7 @@ const ProviderDetailPage = lazy(() => import('@/features/providers/ProviderDetai
 const WizardPage = lazy(() => import('@/features/scheduling/WizardPage'))
 const AppointmentsPage = lazy(() => import('@/features/appointments/AppointmentsPage'))
 const AppointmentDetailPage = lazy(() => import('@/features/appointments/AppointmentDetailPage'))
-const DocumentsPage = lazy(() => import('@/pages/documents-page'))
+const DocumentsPage = lazy(() => import('@/features/documents/DocumentsPage'))
 const MessagesPage = lazy(() => import('@/pages/messages-page'))
 const ConversationPage = lazy(() => import('@/pages/conversation-page'))
 const ProfilePage = lazy(() => import('@/pages/profile-page'))

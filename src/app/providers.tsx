@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/apiClient'
 import { AuthProvider } from '@/features/auth'
+import { UploadProvider } from '@/features/documents'
 import { ThemeProvider } from '@/features/theme'
 
 // Module-scope singletons: one cache and one head per app instance.
@@ -49,7 +50,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <UnheadProvider head={head}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ThemeProvider>{children}</ThemeProvider>
+            {/* Above the page so leaving /documents does not drop the queue. */}
+            <UploadProvider>
+              <ThemeProvider>{children}</ThemeProvider>
+            </UploadProvider>
           </AuthProvider>
         </QueryClientProvider>
       </UnheadProvider>
