@@ -1,2 +1,8 @@
+export { default as ChatPage } from './ChatPage'
+export { default as ConversationsPage } from './ConversationsPage'
+export { Composer } from './Composer'
+export { ConversationList } from './ConversationList'
+export { MessageBubble } from './MessageBubble'
+export { mergeMessages } from './mergeMessages'
 export { fetchConversations, fetchMessages, sendMessage } from './api'
 export { useConversations, useMessages, useSendMessage } from './queries'

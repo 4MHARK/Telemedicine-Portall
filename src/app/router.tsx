@@ -17,14 +17,14 @@ import { readToken } from '@/lib/session'
 
 // Route-level code splitting: each page is its own chunk.
 const DoctorsListPage = lazy(() => import('@/pages/doctors-list-page'))
-const DoctorDetailPage = lazy(() => import('@/pages/doctor-detail-page'))
-const SchedulePage = lazy(() => import('@/pages/schedule-page'))
-const AppointmentsPage = lazy(() => import('@/pages/appointments-page'))
-const AppointmentDetailPage = lazy(() => import('@/pages/appointment-detail-page'))
-const DocumentsPage = lazy(() => import('@/pages/documents-page'))
-const MessagesPage = lazy(() => import('@/pages/messages-page'))
-const ConversationPage = lazy(() => import('@/pages/conversation-page'))
-const ProfilePage = lazy(() => import('@/pages/profile-page'))
+const ProviderDetailPage = lazy(() => import('@/features/providers/ProviderDetailPage'))
+const WizardPage = lazy(() => import('@/features/scheduling/WizardPage'))
+const AppointmentsPage = lazy(() => import('@/features/appointments/AppointmentsPage'))
+const AppointmentDetailPage = lazy(() => import('@/features/appointments/AppointmentDetailPage'))
+const DocumentsPage = lazy(() => import('@/features/documents/DocumentsPage'))
+const ConversationsPage = lazy(() => import('@/features/chat/ConversationsPage'))
+const ChatPage = lazy(() => import('@/features/chat/ChatPage'))
+const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'))
 const LoginPage = lazy(() => import('@/pages/login-page'))
 const NotFoundPage = lazy(() => import('@/pages/not-found-page'))
 
@@ -94,20 +94,20 @@ export const routes: RouteObject[] = [
           { path: 'auth/login', element: <LoginPage />, loader: redirectIfAuthenticated },
 
           { path: 'doctors', element: <DoctorsListPage /> },
-          { path: 'doctors/:providerId', element: <DoctorDetailPage /> },
+          { path: 'doctors/:providerId', element: <ProviderDetailPage /> },
 
           // routes.md's route table puts the wizard at /schedule/:providerId, while
           // its route tree nests it under doctors. The table wins here; the
           // contradiction is reported.
-          { path: 'schedule/:providerId', element: <SchedulePage />, loader: requireAuth },
+          { path: 'schedule/:providerId', element: <WizardPage />, loader: requireAuth },
 
           { path: 'appointments', element: <AppointmentsPage />, loader: requireAuth },
           { path: 'appointments/:id', element: <AppointmentDetailPage />, loader: requireAuth },
 
           { path: 'documents', element: <DocumentsPage />, loader: requireAuth },
 
-          { path: 'messages', element: <MessagesPage />, loader: requireAuth },
-          { path: 'messages/:conversationId', element: <ConversationPage />, loader: requireAuth },
+          { path: 'messages', element: <ConversationsPage />, loader: requireAuth },
+          { path: 'messages/:conversationId', element: <ChatPage />, loader: requireAuth },
 
           { path: 'profile', element: <ProfilePage />, loader: requireAuth },
 

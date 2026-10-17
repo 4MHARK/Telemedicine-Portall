@@ -1,8 +1,14 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 
 import { server } from '@/mocks/server'
+
+// Every mock response carries 200-600ms of simulated latency
+// (docs/api-contract.md), and some pages issue two requests before they can
+// render data. Testing Library's 1s default makes those assertions flaky, so
+// the async timeout matches the 15s vitest timeout.
+configure({ asyncUtilTimeout: 15_000 })
 
 // jsdom does not implement these, and several primitives (dialog, sheet,
 // sonner) reach for them on mount.

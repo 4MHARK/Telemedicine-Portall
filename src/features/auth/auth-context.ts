@@ -11,6 +11,8 @@ export type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated
 export interface AuthContextValue {
   session: AuthSession | null
   status: AuthStatus
+  /** LOGIN with a session, LOGOUT with null. */
+  setSession: (session: AuthSession | null) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

@@ -6,6 +6,10 @@ import { RouterProvider, createMemoryRouter } from 'react-router'
 
 import { routes } from '@/app/router'
 import { AuthProvider } from '@/features/auth'
+// Direct path, not the barrel: the barrel re-exports DocumentsPage, and
+// importing it here would pull the page into the main chunk and defeat the
+// router's lazy import.
+import { UploadProvider } from '@/features/documents/UploadProvider'
 import { ThemeProvider } from '@/features/theme'
 import { encodeJwt } from '@/lib/jwt'
 import { writeSession } from '@/lib/session'
@@ -26,6 +30,9 @@ export function testSession(ttlSeconds = 3600): AuthSession {
       email: 'nadia.okafor@example.com',
       phone: '+1-555-0100',
       dateOfBirth: '1990-01-01T00:00:00.000Z',
+      // Matches the seeded patient in src/mocks/db.ts.
+      insuranceProvider: 'Blue Cross',
+      insuranceMemberId: 'BC-4471902',
     },
   }
 }
@@ -64,9 +71,11 @@ export function renderApp(initialPath = '/', { authed = false }: RenderAppOption
       <UnheadProvider head={createHead()}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ThemeProvider>
-              <RouterProvider router={router} />
-            </ThemeProvider>
+            <UploadProvider>
+              <ThemeProvider>
+                <RouterProvider router={router} />
+              </ThemeProvider>
+            </UploadProvider>
           </AuthProvider>
         </QueryClientProvider>
       </UnheadProvider>
