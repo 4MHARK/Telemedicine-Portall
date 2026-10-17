@@ -17,7 +17,7 @@ import { readToken } from '@/lib/session'
 
 // Route-level code splitting: each page is its own chunk.
 const DoctorsListPage = lazy(() => import('@/pages/doctors-list-page'))
-const DoctorDetailPage = lazy(() => import('@/pages/doctor-detail-page'))
+const ProviderDetailPage = lazy(() => import('@/features/providers/ProviderDetailPage'))
 const SchedulePage = lazy(() => import('@/pages/schedule-page'))
 const AppointmentsPage = lazy(() => import('@/pages/appointments-page'))
 const AppointmentDetailPage = lazy(() => import('@/pages/appointment-detail-page'))
@@ -94,7 +94,7 @@ export const routes: RouteObject[] = [
           { path: 'auth/login', element: <LoginPage />, loader: redirectIfAuthenticated },
 
           { path: 'doctors', element: <DoctorsListPage /> },
-          { path: 'doctors/:providerId', element: <DoctorDetailPage /> },
+          { path: 'doctors/:providerId', element: <ProviderDetailPage /> },
 
           // routes.md's route table puts the wizard at /schedule/:providerId, while
           // its route tree nests it under doctors. The table wins here; the

@@ -5,13 +5,25 @@ import type { FallbackProps } from 'react-error-boundary'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { ApiError } from '@/lib/apiClient'
 import { AuthProvider } from '@/features/auth'
 import { ThemeProvider } from '@/features/theme'
 
 // Module-scope singletons: one cache and one head per app instance.
 // Query defaults are deliberately left at the library defaults — every
 // staleTime / refetchInterval in docs/state-matrix.md is set per query.
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // A 4xx will not fix itself; retrying it only delays the error UI. A 404
+      // provider otherwise sits behind three retries before the page can say
+      // "Provider not found".
+      retry: (failureCount, error) =>
+        !(error instanceof ApiError && error.status >= 400 && error.status < 500) &&
+        failureCount < 2,
+    },
+  },
+})
 const head = createHead()
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
