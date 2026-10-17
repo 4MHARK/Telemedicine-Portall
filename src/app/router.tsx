@@ -22,8 +22,8 @@ const WizardPage = lazy(() => import('@/features/scheduling/WizardPage'))
 const AppointmentsPage = lazy(() => import('@/features/appointments/AppointmentsPage'))
 const AppointmentDetailPage = lazy(() => import('@/features/appointments/AppointmentDetailPage'))
 const DocumentsPage = lazy(() => import('@/features/documents/DocumentsPage'))
-const MessagesPage = lazy(() => import('@/pages/messages-page'))
-const ConversationPage = lazy(() => import('@/pages/conversation-page'))
+const ConversationsPage = lazy(() => import('@/features/chat/ConversationsPage'))
+const ChatPage = lazy(() => import('@/features/chat/ChatPage'))
 const ProfilePage = lazy(() => import('@/pages/profile-page'))
 const LoginPage = lazy(() => import('@/pages/login-page'))
 const NotFoundPage = lazy(() => import('@/pages/not-found-page'))
@@ -106,8 +106,8 @@ export const routes: RouteObject[] = [
 
           { path: 'documents', element: <DocumentsPage />, loader: requireAuth },
 
-          { path: 'messages', element: <MessagesPage />, loader: requireAuth },
-          { path: 'messages/:conversationId', element: <ConversationPage />, loader: requireAuth },
+          { path: 'messages', element: <ConversationsPage />, loader: requireAuth },
+          { path: 'messages/:conversationId', element: <ChatPage />, loader: requireAuth },
 
           { path: 'profile', element: <ProfilePage />, loader: requireAuth },
 
