@@ -45,6 +45,18 @@ Every decision here is frozen for the duration of the project. Reopening one req
 | 31 | Test timeout | 15s (not default 5s) | MSW's mandated 200–600ms latency makes the 5s default unreachable | MSW latency removed |
 | 32 | Base UI dropdown-menu | added as a needed primitive | account menu requires it | never |
 | 33 | `field` upload test caveat | `fail-*` rule is verified in browser, not jsdom | jsdom File cross-realm serializes filename as "blob"; needs Playwright | Phase 3 adds Playwright E2E |
+| 34 | Upload limits | cap at 10 files per drop | prevents a single drop flooding the queue; no count exists in the API contract | never |
+| 35 | Filter history | every URL write uses `replace: true` | typing must not bury the previous page under thirty history entries | never |
+| 36 | Poll merge location | merging inside `queryFn` by reading the cache | React Query otherwise replaces the array and wipes optimistic sends | never |
+| 37 | Query retry policy | QueryClient declines to retry 4xx | a missing provider otherwise sits behind three retries before "Provider not found" renders | never |
+| 38 | Upload queue placement | UploadProvider mounted above the routes | leaving `/documents` mid-upload must not drop the queue | never |
+| 39 | Chat retry | drop the failed optimistic message before re-sending its text | avoids duplicate bubbles for one logical send | never |
+| 40 | Auth context sync | useLogin/useLogout update Context as well as storage | otherwise the provider serves a stale session for the page's lifetime | never |
+| 41 | Header data source | reads useAuth() instead of GET /auth/me | removes a request per page load and keeps the header consistent with profile | never |
+| 42 | Wizard slot range | 7-day/14-day ranges computed once in a state initializer | recomputing per render mints a new query key and refetches forever | never |
+| 43 | Playwright browser | `channel: 'chrome'` | uses installed Chrome instead of downloading a browser binary | never |
+| 44 | Test timing | `asyncUtilTimeout` raised to 15s | mandated 200–600ms mock latency puts some pages past the 1s default | MSW latency removed |
+Note: Overall statement coverage is 75.13%. Per-directory thresholds all pass (100% on reducers/schemas/hooks, 95%+ on API). The `fail-*` upload retry is covered browser-only in Playwright due to a jsdom File cross-realm limitation.
 
 ## Testing Coverage Targets
 
