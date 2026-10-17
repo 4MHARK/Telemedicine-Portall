@@ -31,3 +31,15 @@ export function formatBytes(bytes: number): string {
   const value = bytes / 1024 ** exponent
   return `${exponent === 0 ? Math.round(value) : value.toFixed(1)} ${unit}`
 }
+
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+export function formatDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  const ms = Date.parse(value)
+  return Number.isNaN(ms) ? '—' : dateFormatter.format(new Date(ms))
+}

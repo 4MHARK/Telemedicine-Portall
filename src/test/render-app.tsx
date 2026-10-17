@@ -27,6 +27,9 @@ export function testSession(ttlSeconds = 3600): AuthSession {
       email: 'nadia.okafor@example.com',
       phone: '+1-555-0100',
       dateOfBirth: '1990-01-01T00:00:00.000Z',
+      // Matches the seeded patient in src/mocks/db.ts.
+      insuranceProvider: 'Blue Cross',
+      insuranceMemberId: 'BC-4471902',
     },
   }
 }

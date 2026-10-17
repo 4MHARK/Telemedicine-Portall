@@ -24,7 +24,7 @@ const AppointmentDetailPage = lazy(() => import('@/features/appointments/Appoint
 const DocumentsPage = lazy(() => import('@/features/documents/DocumentsPage'))
 const ConversationsPage = lazy(() => import('@/features/chat/ConversationsPage'))
 const ChatPage = lazy(() => import('@/features/chat/ChatPage'))
-const ProfilePage = lazy(() => import('@/pages/profile-page'))
+const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'))
 const LoginPage = lazy(() => import('@/pages/login-page'))
 const NotFoundPage = lazy(() => import('@/pages/not-found-page'))
 

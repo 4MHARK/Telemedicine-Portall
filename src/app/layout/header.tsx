@@ -11,9 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useMe } from '@/features/auth'
+import { useAuth } from '@/features/auth'
 import { useTheme } from '@/features/theme'
-import { readToken } from '@/lib/session'
 
 /**
  * Logo, the signed-in patient's menu, and the theme toggle.
@@ -24,8 +23,10 @@ import { readToken } from '@/lib/session'
  */
 export function Header() {
   const { theme, toggleTheme } = useTheme()
-  const hasSession = Boolean(readToken())
-  const { data: patient } = useMe(hasSession)
+  // The auth Context now hydrates from storage, so the header reads it rather
+  // than issuing a GET /auth/me.
+  const { session } = useAuth()
+  const patient = session?.patient
   const isDark = theme === 'dark'
 
   return (
