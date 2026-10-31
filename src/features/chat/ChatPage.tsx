@@ -3,11 +3,10 @@ import { useEffect, useRef } from 'react'
 import { Link, useParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { ErrorState, LoadingSkeleton, PageHeader } from '@/components/shared'
+import { AsyncStatus, LoadingSkeleton, PageHeader } from '@/components/shared'
 import { Button } from '@/components/ui/button'
 import { useProviders } from '@/features/providers'
 import { usePageTitle } from '@/hooks/use-page-title'
-import { ApiError } from '@/lib/apiClient'
 import { queryKeys } from '@/lib/queryKeys'
 import type { ChatMessage, Provider } from '@/types'
 import { Composer } from './Composer'
@@ -90,27 +89,20 @@ export default function ChatPage() {
           </header>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4" data-slot="message-scroll">
-            {messages.isPending ? <LoadingSkeleton variant="list" count={3} /> : null}
-
-            {messages.isError ? (
-              <ErrorState
-                title="Could not load this conversation"
-                message={
-                  messages.error instanceof ApiError
-                    ? messages.error.message
-                    : 'The conversation is unavailable right now.'
-                }
-                onRetry={() => void messages.refetch()}
-              />
-            ) : null}
-
-            {messages.isSuccess ? (
-              <ul className="flex list-none flex-col gap-3 p-0" aria-label="Messages">
-                {messages.data.map((message) => (
-                  <MessageBubble key={message.id} message={message} onRetry={retry} />
-                ))}
-              </ul>
-            ) : null}
+            <AsyncStatus
+              query={messages}
+              skeleton={<LoadingSkeleton variant="list" count={3} />}
+              errorTitle="Could not load this conversation"
+              errorFallback="The conversation is unavailable right now."
+            >
+              {(data) => (
+                <ul className="flex list-none flex-col gap-3 p-0" aria-label="Messages">
+                  {data.map((message) => (
+                    <MessageBubble key={message.id} message={message} onRetry={retry} />
+                  ))}
+                </ul>
+              )}
+            </AsyncStatus>
           </div>
 
           <div className="p-3">
