@@ -1,8 +1,3 @@
-/**
- * Auth state — docs/state-matrix.md: `{ session, status }` in Context + Reducer,
- * with HYDRATE / LOGIN / LOGOUT / EXPIRE. Pure, so it is testable in isolation.
- */
-
 import type { AuthSession } from '@/types'
 import type { AuthStatus } from './auth-context'
 

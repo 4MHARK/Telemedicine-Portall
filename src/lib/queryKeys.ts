@@ -1,9 +1,3 @@
-/**
- * Centralised query keys, transcribed from docs/state-matrix.md.
- *
- * Every key is a function or a `readonly` tuple. Never inline string arrays.
- */
-
 import type { AppointmentStatus, ProviderFilters } from '@/types'
 
 export const queryKeys = {

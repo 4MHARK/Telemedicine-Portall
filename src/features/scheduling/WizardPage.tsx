@@ -43,8 +43,7 @@ function WizardContent({ providerId }: { providerId: string }) {
     return { from: new Date(now).toISOString(), to: new Date(now + FOURTEEN_DAYS_MS).toISOString() }
   })
 
-  // Same query key as SlotStep, so this reads the cached list rather than
-  // issuing a second request.
+  // Same key as SlotStep, so this reuses the cached list.
   const slots = useProviderSlots(providerId, slotRange)
 
   const form = useForm<WizardValues>({
@@ -58,8 +57,7 @@ function WizardContent({ providerId }: { providerId: string }) {
 
   const step = state.step
 
-  // Named watches rather than form.watch(): the no-argument form cannot be
-  // memoised safely and is flagged by react-hooks/incompatible-library.
+  // useWatch, not form.watch(): the no-arg version breaks the compiler rules.
   const values: WizardValues = {
     slotId: useWatch({ control: form.control, name: 'slotId' }) ?? '',
     consultationType: useWatch({ control: form.control, name: 'consultationType' }),
@@ -71,20 +69,17 @@ function WizardContent({ providerId }: { providerId: string }) {
     ? `${provider.data.title} ${provider.data.firstName} ${provider.data.lastName}`
     : 'Provider'
 
-  // --- leaving mid-wizard ------------------------------------------------
+  // Leaving mid-wizard
   const isDirty = form.formState.isDirty
 
-  // Set on success; the effect below performs the redirect. Keeping it in
-  // state (rather than a ref read inside submit) also tells the blocker that
-  // this navigation is intentional.
+  // Set on success; the effect below does the redirect.
   const [bookedId, setBookedId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!bookedId) return
-    // Deferred one tick. useBlocker refreshes its predicate in an effect, and
-    // effects run in declaration order — navigating synchronously here would
-    // still be judged by the predicate from before `bookedId` was set, and the
-    // post-booking redirect would be interrupted by the unsaved-changes dialog.
+    // One tick late on purpose: useBlocker refreshes its predicate in an
+    // effect, so navigating now would still hit the stale one and pop the
+    // unsaved-changes dialog.
     const timer = setTimeout(() => {
       void navigate(`/appointments/${bookedId}`, { replace: true })
     }, 0)
@@ -106,7 +101,6 @@ function WizardContent({ providerId }: { providerId: string }) {
       !bookedId && isDirty && currentLocation.pathname !== nextLocation.pathname,
   )
 
-  // --- navigation + submit ----------------------------------------------
   async function goNext() {
     const fields = STEP_FIELDS[step] ?? []
     if (fields.length > 0) {
@@ -133,7 +127,7 @@ function WizardContent({ providerId }: { providerId: string }) {
         error instanceof ApiError ? error.message : 'The appointment could not be booked.'
 
       if (error instanceof ApiError && error.code === 'SLOT_TAKEN') {
-        // The slot went under us: clear it, go back, and refetch availability.
+        // Slot got taken while we were filling the form.
         form.setValue('slotId', '', { shouldDirty: true })
         dispatch({ type: 'GOTO', step: 0 })
         void slots.refetch()

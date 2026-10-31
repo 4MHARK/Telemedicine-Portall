@@ -7,12 +7,8 @@ import { resolveInitialTheme, writeStoredTheme } from './storage'
 import { ThemeContext } from './theme-context'
 import type { ThemeContextValue } from './theme-context'
 
-/**
- * Boots the theme from localStorage, falling back to prefers-color-scheme.
- * Running the initial theme through the reducer means HYDRATE is the action
- * that establishes the first state rather than something dispatched later
- * (which would flash the wrong theme).
- */
+// localStorage first, then prefers-color-scheme. Runs through HYDRATE so the
+// first paint is already the right theme.
 function initTheme() {
   return themeReducer(initialThemeState, { type: 'HYDRATE', theme: resolveInitialTheme() })
 }

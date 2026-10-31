@@ -28,14 +28,8 @@ export interface ProviderFilterState {
   clear: () => void
 }
 
-/**
- * Provider filters live in the URL — docs/state-matrix.md names search params
- * as the source of truth ("shareable, back-button friendly").
- *
- * Every write replaces the history entry rather than pushing one, so typing a
- * search does not bury the previous page under thirty history entries. The URL
- * still round-trips through reloads and back/forward.
- */
+// Filters live in the URL so reloads and back/forward keep them.
+// Writes replace the history entry — typing shouldn't fill up the back stack.
 export function useProviderFilters(): ProviderFilterState {
   const [searchParams, setSearchParams] = useSearchParams()
 

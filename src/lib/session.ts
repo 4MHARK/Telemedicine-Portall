@@ -1,11 +1,4 @@
-/**
- * Session persistence.
- *
- * docs/decisions.md row 4: the mock JWT lives in localStorage. This module is
- * the single owner of that key — the 401 handler clears through it, and the
- * auth feature writes through it.
- */
-
+// Single owner of the localStorage session key.
 import type { AuthSession } from '@/types'
 
 // Not specified in docs/ — recorded here for review.

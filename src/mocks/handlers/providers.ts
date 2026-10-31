@@ -1,16 +1,6 @@
-/**
- * docs/api-contract.md § Providers.
- *
- * NOTE — docs conflict, resolved in favour of routes.md:
- *   api-contract.md: "Auth: Authorization: Bearer <token> on every route
- *                     except /auth/*"
- *   routes.md:       "/doctors public", "/doctors/:providerId public"
- * Both cannot hold: a public doctor directory whose data endpoint demands a
- * token would bounce every anonymous visitor to the login screen. These three
- * endpoints are therefore left unauthenticated to match the public routes,
- * and the issue is reported for a docs decision.
- */
-
+// Unauthenticated on purpose: routes.md marks /doctors public, so a token here
+// would bounce anonymous visitors to login. api-contract.md says otherwise; the
+// conflict is recorded in docs/decisions.md.
 import { http, HttpResponse } from 'msw'
 
 import { providers, slots, specialties } from '../db'
@@ -19,11 +9,7 @@ import { apiError, latency } from './shared'
 const DEFAULT_PAGE_SIZE = 12
 const MAX_PAGE_SIZE = 50
 
-/**
- * docs/api-contract.md names the three `availability` values but not their
- * bounds. These are our definition, rolling forward from "now" — the code
- * review should confirm them.
- */
+// The contract names the values but not the windows; these are ours.
 const AVAILABILITY_WINDOW_MS = {
   now: 2 * 60 * 60 * 1000,
   today: 24 * 60 * 60 * 1000,
@@ -62,8 +48,7 @@ export const providerHandlers = [
         if (!haystack.includes(q)) return false
       }
 
-      // Multi-select reads as OR — a provider matches if it holds any of the
-      // selected specialties. api-contract.md does not say; reported.
+      // Multi-select is OR (any selected specialty matches).
       if (specialtyIds.size > 0 && !provider.specialtyIds.some((id) => specialtyIds.has(id))) {
         return false
       }

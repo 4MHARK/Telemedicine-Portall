@@ -1,11 +1,5 @@
-/**
- * Upload transport.
- *
- * docs/decisions.md row 6: XHR, not fetch, because fetch cannot report upload
- * progress. Row 8: MSW cannot emit real upload.onprogress events, so in DEV
- * the wrapper emits synthetic ticks on a timer while the request is in flight.
- */
-
+// XHR, not fetch: fetch can't report upload progress. MSW can't emit
+// onprogress either, so in DEV we fake the ticks on a timer.
 import { ApiError } from '@/lib/apiClient'
 import type { ApiErrorBody, Document } from '@/types'
 

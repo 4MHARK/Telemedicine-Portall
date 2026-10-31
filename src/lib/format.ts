@@ -1,5 +1,3 @@
-/** Presentation helpers for dates and counts. */
-
 const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: 'short',
   day: 'numeric',

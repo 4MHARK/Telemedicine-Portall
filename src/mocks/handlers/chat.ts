@@ -1,15 +1,5 @@
-/**
- * docs/api-contract.md § Chat.
- *
- * Simulated condition owned here: "after ~1.5 s the provider replies once, on
- * the next poll". The reply is appended to the store on a timer, so the 3 s
- * poll interval from docs/state-matrix.md is what actually delivers it.
- *
- * Transport note (docs/decisions.md rows 9–11): polling, and the client merges
- * incoming messages by id rather than replacing the array. This handler is
- * unaware of that — it just answers with the current list.
- */
-
+// The provider's reply lands on a ~1.5s timer, so the client's 3s poll is what
+// actually delivers it.
 import { http, HttpResponse } from 'msw'
 
 import type { ChatMessage } from '@/types'

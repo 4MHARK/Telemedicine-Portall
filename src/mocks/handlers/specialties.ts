@@ -1,11 +1,3 @@
-/**
- * docs/api-contract.md § Specialties.
- *
- * Public, unlike the rest of the API: docs/routes.md marks /doctors and
- * /doctors/:providerId public, and those pages cannot render without this
- * list. See the conflict note in providers.ts.
- */
-
 import { http, HttpResponse } from 'msw'
 
 import { specialties } from '../db'
