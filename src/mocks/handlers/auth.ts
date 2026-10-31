@@ -1,11 +1,4 @@
-/**
- * docs/api-contract.md § Auth.
- *
- * `/auth/*` is the one group exempt from the Bearer rule, but GET /auth/me
- * still has to validate: its contract is "401 if token missing / invalid /
- * expired", because it is what rehydrates the session on boot.
- */
-
+// /auth/me validates the token — it's what rehydrates the session on boot.
 import { http, HttpResponse } from 'msw'
 
 import { patients } from '../db'

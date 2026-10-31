@@ -6,11 +6,7 @@ import type { ChatMessage } from '@/types'
 import { fetchConversations, fetchMessages, sendMessage } from './api'
 import { mergeMessages } from './mergeMessages'
 
-/**
- * docs/state-matrix.md: conversations poll every 10 s, background off. The
- * interval is what surfaces a provider's reply, which the mock sends ~1.5 s
- * after a patient message (docs/api-contract.md).
- */
+// Poll every 10s — this is how the provider's reply shows up.
 export function useConversations() {
   return useQuery({
     queryKey: queryKeys.chat.conversations,
@@ -20,14 +16,8 @@ export function useConversations() {
   })
 }
 
-/**
- * docs/state-matrix.md: messages poll every 3 s, background off.
- *
- * The poll result is merged with the cached list rather than replacing it, so
- * an optimistic send that the server has not acknowledged yet survives
- * (docs/decisions.md row 10). Reading the cache inside queryFn is what makes
- * that possible — React Query would otherwise swap the whole array.
- */
+// Merge the poll result into the cache instead of replacing it, otherwise an
+// optimistic send disappears until the server echoes it back.
 export function useMessages(conversationId: string) {
   const queryClient = useQueryClient()
   const key = queryKeys.chat.messages(conversationId)
@@ -45,11 +35,8 @@ export function useMessages(conversationId: string) {
   })
 }
 
-/**
- * Optimistic send. The message is appended with status `sending`, the server
- * copy replaces it on success, and a failure flips it to `failed` (retryable)
- * instead of removing it, so the text is never lost.
- */
+// Optimistic send: append as 'sending', swap in the server copy on success,
+// mark it 'failed' (and keep the text) on error.
 export function useSendMessage(conversationId: string) {
   const queryClient = useQueryClient()
   const key = queryKeys.chat.messages(conversationId)

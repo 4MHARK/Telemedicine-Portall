@@ -1,12 +1,5 @@
-/**
- * Mock-JWT helpers.
- *
- * There is no signature to verify — the third segment is a placeholder — so a
- * token is only ever decoded, never trusted. Lives in lib/ rather than mocks/
- * because the route guard in docs/routes.md validates `exp` client-side, and
- * app code should not import from the mock layer.
- */
-
+// The token is only decoded, never trusted — there's no signature to check.
+// Lives here so the route guard doesn't import from mocks/.
 import type { ISODateString, JwtPayload, UUID } from '@/types'
 
 /** docs/api-contract.md: the mock token expires 60 min after it is issued. */

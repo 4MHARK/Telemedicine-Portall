@@ -1,24 +1,16 @@
-/**
- * Shared handler plumbing: simulated latency, the auth guard, and the
- * ApiErrorBody response shape from docs/api-contract.md.
- */
-
+// Latency, auth guard, and the ApiErrorBody shape.
 import { delay, HttpResponse } from 'msw'
 
 import type { ApiErrorBody, UUID } from '@/types'
 import { decodeToken, isTokenValid } from '@/lib/jwt'
 import { patients } from '../db'
 
-/**
- * docs/api-contract.md, Simulated Conditions: 200–600 ms of random latency on
- * every handler. Left in place during tests too — the loading states the
- * integration tests assert on need it.
- */
+// 200-600ms. Kept on in tests too, otherwise loading states are never visible.
 export function latency(): Promise<void> {
   return delay(200 + Math.floor(Math.random() * 401))
 }
 
-/** docs/api-contract.md, Errors: always the ApiErrorBody shape. */
+// Errors always use the ApiErrorBody shape.
 export function apiError(
   status: number,
   code: string,
@@ -31,15 +23,7 @@ export function apiError(
 
 export type AuthResult = { ok: true; patientId: UUID } | { ok: false; response: Response }
 
-/**
- * docs/api-contract.md: `Authorization: Bearer <token>` on every route except
- * `/auth/*`.
- *
- * Returns a discriminated result rather than throwing, so a handler reads:
- *
- *     const auth = authenticate(request)
- *     if (!auth.ok) return auth.response
- */
+// Bearer token check. Returns a result so handlers can early-return.
 export function authenticate(request: Request): AuthResult {
   const header = request.headers.get('Authorization')
   const token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : null
@@ -62,7 +46,7 @@ export function authenticate(request: Request): AuthResult {
 
 export type JsonResult<T> = { ok: true; data: T } | { ok: false; response: Response }
 
-/** Body parsing that answers 422 rather than throwing on malformed JSON. */
+// 422 instead of throwing on bad JSON.
 export async function readJson<T>(request: Request): Promise<JsonResult<T>> {
   try {
     return { ok: true, data: (await request.json()) as T }

@@ -1,19 +1,5 @@
-/**
- * In-memory mock database.
- *
- * Seeded once at module load from a fixed PRNG seed, so every reload produces
- * byte-identical data. Handlers import these collections and mutate them
- * directly — this is a mock, and holding the state in module scope is what
- * makes POST / DELETE behave like real writes within a session.
- *
- * No faker: every value below is hand-rolled so the shapes and the
- * distributions are visible and reviewable.
- *
- * Scope note (docs/decisions.md, Project Scope): all data is mocked and no
- * real network call leaves the browser. Avatars are therefore inline SVG data
- * URIs rather than remote image URLs.
- */
-
+// In-memory mock data, seeded once from a fixed PRNG so reloads match.
+// Handlers mutate these arrays directly — this is the "database".
 import type {
   Appointment,
   AppointmentStatus,
@@ -29,7 +15,7 @@ import type {
   UUID,
 } from '@/types'
 
-// ── Seeded PRNG ──────────────────────────────────────────────
+// Seeded PRNG
 
 const SEED = 20260216
 
@@ -71,12 +57,12 @@ function pickSome<T>(items: readonly T[], min: number, max: number): T[] {
   return out
 }
 
-// ── Dates ────────────────────────────────────────────────────
+// Dates
 
 const DAY_MS = 86_400_000
 const HOUR_MS = 3_600_000
 
-/** Midnight UTC today — anchors slot generation so it is stable within a day. */
+// Midnight UTC, so slot times are stable for the day.
 const BASE_MS = (() => {
   const d = new Date()
   d.setUTCHours(0, 0, 0, 0)
@@ -91,13 +77,13 @@ function at(dayOffset: number, hour: number, minute = 0): number {
   return BASE_MS + dayOffset * DAY_MS + hour * HOUR_MS + minute * 60_000
 }
 
-// ── Presentation helpers ─────────────────────────────────────
+// Presentation helpers
 
 function initials(first: string, last: string): string {
   return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase()
 }
 
-/** Deterministic inline-SVG avatar — no network request. */
+// Inline SVG so avatars don't hit the network.
 function avatarDataUri(label: string, hue: number): string {
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">` +
@@ -107,7 +93,7 @@ function avatarDataUri(label: string, hue: number): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
 
-// ── Specialties (12) ─────────────────────────────────────────
+// Specialties (12)
 
 const SPECIALTY_SEED: ReadonlyArray<{ name: string; slug: string; icon: string }> = [
   { name: 'Cardiology', slug: 'cardiology', icon: 'HeartPulse' },
@@ -131,7 +117,7 @@ export const specialties: Specialty[] = SPECIALTY_SEED.map((s, i) => ({
   icon: s.icon,
 }))
 
-// ── Providers (40) ───────────────────────────────────────────
+// Providers (40)
 
 const FIRST_NAMES = [
   'Amara',
@@ -268,15 +254,14 @@ function makeProvider(index: number, specialtyIds: UUID[]): Provider {
     reviewCount: int(12, 420),
     languages: ['English', ...pickSome(LANGUAGES.slice(1), 0, 2)],
     consultationTypes: pickSome(CONSULTATION_TYPES, 1, 3),
-    // Filled in once slots exist, so it always reflects real availability.
+    // Set once slots exist.
     nextAvailableAt: null,
   }
 }
 
 export const providers: Provider[] = []
 for (let i = 0; i < 40; i++) {
-  // Round-robin the primary specialty so all 12 are represented, then give
-  // roughly a third of providers a second specialty.
+  // Round-robin the primary specialty; every third provider gets a second one.
   const primary = specialties[i % specialties.length]
   if (!primary) throw new Error('specialties seed is empty')
   const extra = i % 3 === 0 ? pickSome(specialties, 1, 1) : []
@@ -284,7 +269,7 @@ for (let i = 0; i < 40; i++) {
   providers.push(makeProvider(i, specialtyIds))
 }
 
-// ── Availability slots (~15 per provider, next 14 days) ──────
+// Availability slots (~15 per provider, next 14 days)
 
 const SLOT_HOURS = [9, 10, 11, 13, 14, 15, 16] as const
 const SLOT_MINUTES = [0, 30] as const
@@ -313,13 +298,10 @@ for (const provider of providers) {
   }
 }
 
-// A handful of blocked slots, so the status is exercised.
+// A few blocked slots so the status isn't unused.
 for (const slot of pickSome(slots, 20, 30)) slot.status = 'blocked'
 
-// Imminent slots, so the `availability=now` filter from docs/api-contract.md
-// has something to match whatever time of day the app is opened. Generated
-// relative to the wall clock rather than BASE_MS, and only for providers that
-// do not take part in the no-availability case below.
+// Slots in the next hour or two, so availability=now has something to match.
 const NO_AVAILABILITY_INDEXES = [1, 2] as const
 providers.forEach((provider, i) => {
   if (i % 3 !== 0 || NO_AVAILABILITY_INDEXES.includes(i as 1 | 2)) return
@@ -335,7 +317,7 @@ providers.forEach((provider, i) => {
   }
 })
 
-// ── Patients (3) ─────────────────────────────────────────────
+// Patients (3)
 
 function makePatient(
   index: number,
@@ -363,10 +345,10 @@ export const patients: Patient[] = [
   makePatient(2, 'Mei', 'Chen', 'UnitedHealth', 'UH-1190283'),
 ]
 
-/** The signed-in patient. docs/api-contract.md: any credentials sign you in. */
+// The signed-in patient.
 export const CURRENT_PATIENT_ID: UUID = patients[0]?.id ?? 'pat_01'
 
-// ── Appointments (8 for the current patient) ─────────────────
+// Appointments (8 for the current patient)
 
 const REASONS = [
   'Recurring headaches for the past two weeks',
@@ -391,7 +373,7 @@ function bookSlot(slot: AvailabilitySlot): void {
   slot.status = 'booked'
 }
 
-/** Past slots created only so completed/cancelled appointments have a slotId. */
+// Backing slots for past appointments.
 function historicalSlot(
   providerId: UUID,
   dayOffset: number,
@@ -458,7 +440,7 @@ APPOINTMENT_PLAN.forEach((status, i) => {
   })
 })
 
-// ── Documents (6 for the current patient) ────────────────────
+// Documents (6 for the current patient)
 
 const DOCUMENT_SEED: ReadonlyArray<{ fileName: string; mimeType: string; sizeBytes: number }> = [
   { fileName: 'blood-panel-february.pdf', mimeType: 'application/pdf', sizeBytes: 284_512 },
@@ -484,7 +466,7 @@ export const documents: Document[] = DOCUMENT_SEED.map((doc, i) => {
   }
 })
 
-// ── Chat (3 conversations, ~10 messages each) ────────────────
+// Chat (3 conversations, ~10 messages each)
 
 const CONVERSATION_SCRIPTS: ReadonlyArray<
   ReadonlyArray<{ from: 'patient' | 'provider'; body: string }>
@@ -612,7 +594,7 @@ CONVERSATION_SCRIPTS.forEach((script, c) => {
   })
 })
 
-// ── Derived: nextAvailableAt ─────────────────────────────────
+// Derived: nextAvailableAt
 
 // Two providers genuinely have nothing free, so consumers exercise the
 // `nextAvailableAt: null` branch from docs/domain.ts ("null = no availability

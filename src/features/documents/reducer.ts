@@ -1,11 +1,4 @@
-/**
- * Upload queue — Context + Reducer, never TanStack Query
- * (docs/decisions.md row 7: Query has no concept of transfer progress).
- *
- * Tasks hold the File reference so a retry does not need the user to pick the
- * file again. Pure, so it is testable in isolation.
- */
-
+// Keeps File refs so retry doesn't make the user pick the file again.
 import type { UploadTask } from '@/types'
 
 export interface UploadState {

@@ -1,8 +1,4 @@
-/**
- * Issuing side of the mock JWT. Decoding lives in src/lib/jwt.ts, because the
- * route guard needs it and app code must not import from the mock layer.
- */
-
+// Decoding lives in lib/jwt so the route guard doesn't import from mocks/.
 import { encodeJwt, expiresAtFromPayload, TOKEN_TTL_MINUTES } from '@/lib/jwt'
 import type { AuthSession, JwtPayload, Patient } from '@/types'
 

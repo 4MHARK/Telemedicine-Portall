@@ -5,9 +5,8 @@ import { defineConfig, devices } from '@playwright/test'
  * these tests exercise the browser path, including the `fail-*` upload rule
  * that jsdom cannot reach.
  *
- * `channel: 'chrome'` uses the installed Google Chrome rather than downloading
- * a Playwright browser. Change it to remove the channel and run
- * `npx playwright install chromium` if that is preferred on CI.
+ * Local runs use the installed Google Chrome; CI installs the bundled Chromium
+ * (`npx playwright install chromium`), so the channel is dropped there.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -20,10 +19,15 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: 'http://localhost:5173',
-    channel: 'chrome',
+    channel: process.env.CI ? undefined : 'chrome',
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], channel: 'chrome' } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], channel: process.env.CI ? undefined : 'chrome' },
+    },
+  ],
   webServer: {
     command: 'npm run dev -- --port 5173 --strictPort',
     url: 'http://localhost:5173',

@@ -4,20 +4,9 @@ import { describe, expect, it } from 'vitest'
 
 import { renderApp } from '../render-app'
 
-/**
- * NOTE — the `fail-*` retry path is intentionally absent here.
- *
- * jsdom's File is cross-realm from undici's Blob, so a File built in the test
- * serialises into multipart with the filename "blob" and the mock's
- * "name starts with fail-" rule never matches. Building the multipart body by
- * hand works for a direct request, but the UI uploads through XHR and
- * constructs FormData from the File itself, so there is no seam to inject it.
- *
- * The path is covered in e2e/upload.spec.ts against a real browser, and
- * verified manually: fail-*.pdf shows "Simulated upload failure", Retry
- * re-sends, and the second attempt succeeds because the handler fails once
- * per session.
- */
+// The fail-* retry isn't tested here: jsdom's File is cross-realm from undici's
+// Blob, so the filename arrives as "blob" and the mock's rule can't match.
+// It's covered in e2e/upload.spec.ts instead.
 
 function docRows(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>('[data-slot="document-row"]')]

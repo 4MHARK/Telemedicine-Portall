@@ -45,17 +45,13 @@ function Fallback({
   )
 }
 
-/** Render errors inside a page. react-error-boundary v6. */
+// Render errors inside a page.
 function RenderErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const { title, message } = describe(error)
   return <Fallback title={title} message={message} onRetry={resetErrorBoundary} />
 }
 
-/**
- * Wraps the routed content so a render error inside one page shows the
- * fallback in place of that page, leaving the shell (header and navigation)
- * intact.
- */
+// Keeps the shell around a page that throws.
 export function RouteBoundary() {
   return (
     <ErrorBoundary FallbackComponent={RenderErrorFallback}>
@@ -64,11 +60,7 @@ export function RouteBoundary() {
   )
 }
 
-/**
- * Loader errors and thrown responses. React Router hands them to the nearest
- * errorElement, so this renders in the Outlet slot rather than replacing the
- * whole shell.
- */
+// Loader errors land here, in the Outlet slot, not over the whole shell.
 export function RouteErrorPage() {
   const error = useRouteError()
   const { title, message } = describe(error)

@@ -7,23 +7,12 @@ import { SideNav } from './side-nav'
 
 export interface RootLayoutProps {
   children: ReactNode
-  /**
-   * Supplied by the router once it exists; falls back to the current URL so the
-   * shell can also be rendered on its own.
-   */
+  // Supplied by the router; falls back to the current URL.
   currentPath?: string
 }
 
-/**
- * The application shell.
- *
- * Responsive navigation follows docs/routes.md § Responsive Shell Behavior:
- * bottom tab bar below `md`, icon rail from `md` to `lg`, full sidebar from
- * `lg` up, and a max-width container on wide screens.
- *
- * Takes children rather than rendering an <Outlet />, so it stays independent
- * of the router.
- */
+// Bottom tabs below md, icon rail to lg, sidebar above. Takes children so it
+// doesn't depend on the router.
 export function RootLayout({ children, currentPath }: RootLayoutProps) {
   const pathname = currentPath ?? window.location.pathname
 

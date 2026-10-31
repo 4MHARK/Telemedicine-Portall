@@ -1,15 +1,5 @@
-/**
- * The single HTTP entry point.
- *
- * docs/api-contract.md: base URL `/api`, `Authorization: Bearer <token>` on
- * every route except `/auth/*`, and errors always in the ApiErrorBody shape.
- * docs/decisions.md row 5: a global handler in apiClient clears the session and
- * redirects to /auth/login when a 401 comes back.
- *
- * Uploads are deliberately absent: docs/decisions.md rows 6–8 give the upload
- * transport to XHR, because fetch cannot report progress.
- */
-
+// All API calls go through here: base /api, bearer token, typed ApiError.
+// A 401 clears the session and redirects to login.
 import type { ApiErrorBody } from '@/types'
 import { clearSession, readToken } from './session'
 
@@ -37,13 +27,8 @@ export class ApiError extends Error {
 
 export const LOGIN_PATH = '/auth/login'
 
-/**
- * docs/decisions.md row 5 + docs/routes.md § Global 401 Handler:
- * clear the session, then send the user to /auth/login?next=<current path>.
- *
- * Errors from `/auth/*` are excluded by the caller: a failed login returns 401
- * by design and must surface to the form, not bounce the page.
- */
+// Clear the session and bounce to login with ?next.
+// /auth/* is skipped — a failed login is a 401 too, and should reach the form.
 function handleUnauthorized(): void {
   clearSession()
 

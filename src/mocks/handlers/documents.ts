@@ -1,16 +1,4 @@
-/**
- * docs/api-contract.md § Documents.
- *
- * Simulated conditions owned here:
- *   - POST returns 500 for a file whose name starts with `fail-`, once per
- *     session (module-level flag, reset on reload)
- *   - 413 above 10 MB, 415 outside the allowed mime types
- *
- * Transport note (docs/decisions.md rows 6–8): the client uploads with XHR,
- * not fetch, and synthesises progress ticks in DEV because MSW cannot emit
- * real upload.onprogress events. This handler only sees the finished request.
- */
-
+// fail-* files 500 once per session; >10MB is 413; wrong mime type is 415.
 import { http, HttpResponse } from 'msw'
 
 import type { Document } from '@/types'

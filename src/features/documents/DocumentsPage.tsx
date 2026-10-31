@@ -2,9 +2,9 @@ import { FileText, Trash2 } from 'lucide-react'
 import { Link } from 'react-router'
 
 import {
+  AsyncStatus,
   ConfirmDialog,
   EmptyState,
-  ErrorState,
   LoadingSkeleton,
   PageHeader,
 } from '@/components/shared'
@@ -66,71 +66,64 @@ export default function DocumentsPage() {
         <section aria-label="Your documents" className="flex flex-col gap-3">
           <h2 className="font-medium">Your documents</h2>
 
-          {documents.isPending ? <LoadingSkeleton variant="list" count={4} /> : null}
-
-          {documents.isError ? (
-            <ErrorState
-              title="Could not load documents"
-              message={
-                documents.error instanceof ApiError
-                  ? documents.error.message
-                  : 'Documents are unavailable right now.'
-              }
-              onRetry={() => void documents.refetch()}
-            />
-          ) : null}
-
-          {documents.isSuccess && documents.data.length === 0 ? (
-            <EmptyState
-              icon={FileText}
-              title="No documents yet"
-              description="Upload a PDF or image and it will appear here."
-              action={
-                <Button variant="outline" nativeButton={false} render={<Link to="/messages" />}>
-                  Message your provider
-                </Button>
-              }
-            />
-          ) : null}
-
-          {documents.isSuccess && documents.data.length > 0 ? (
-            <ul className="flex list-none flex-col gap-2 p-0">
-              {documents.data.map((document) => (
-                <li
-                  key={document.id}
-                  className="border-border flex items-center gap-3 rounded-lg border p-3"
-                  data-slot="document-row"
-                >
-                  <FileText className="text-text-muted size-4 shrink-0" aria-hidden="true" />
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-sm">{document.fileName}</span>
-                    <span className="text-text-muted text-xs">
-                      {formatBytes(document.sizeBytes)} ·{' '}
-                      {document.uploadedAt ? formatDateTime(document.uploadedAt) : 'Not uploaded'}
-                    </span>
-                  </div>
-                  <Badge variant={STATUS_VARIANT[document.status]}>{document.status}</Badge>
-                  <ConfirmDialog
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Delete ${document.fileName}`}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    }
-                    title="Delete this document?"
-                    description={`${document.fileName} will be removed permanently.`}
-                    confirmLabel="Delete"
-                    destructive
-                    isPending={removeDocument.isPending}
-                    onConfirm={() => removeDocument.mutate(document.id)}
-                  />
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <AsyncStatus
+            query={documents}
+            skeleton={<LoadingSkeleton variant="list" count={4} />}
+            errorTitle="Could not load documents"
+            errorFallback="Documents are unavailable right now."
+            isEmpty={(data) => data.length === 0}
+            empty={
+              <EmptyState
+                icon={FileText}
+                title="No documents yet"
+                description="Upload a PDF or image and it will appear here."
+                action={
+                  <Button variant="outline" nativeButton={false} render={<Link to="/messages" />}>
+                    Message your provider
+                  </Button>
+                }
+              />
+            }
+          >
+            {(data) => (
+              <ul className="flex list-none flex-col gap-2 p-0">
+                {data.map((document) => (
+                  <li
+                    key={document.id}
+                    className="border-border flex items-center gap-3 rounded-lg border p-3"
+                    data-slot="document-row"
+                  >
+                    <FileText className="text-text-muted size-4 shrink-0" aria-hidden="true" />
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-sm">{document.fileName}</span>
+                      <span className="text-text-muted text-xs">
+                        {formatBytes(document.sizeBytes)} ·{' '}
+                        {document.uploadedAt ? formatDateTime(document.uploadedAt) : 'Not uploaded'}
+                      </span>
+                    </div>
+                    <Badge variant={STATUS_VARIANT[document.status]}>{document.status}</Badge>
+                    <ConfirmDialog
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Delete ${document.fileName}`}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                      title="Delete this document?"
+                      description={`${document.fileName} will be removed permanently.`}
+                      confirmLabel="Delete"
+                      destructive
+                      isPending={removeDocument.isPending}
+                      onConfirm={() => removeDocument.mutate(document.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AsyncStatus>
 
           {removeDocument.isError ? (
             <p role="alert" className="text-danger text-sm">

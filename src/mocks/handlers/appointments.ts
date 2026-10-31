@@ -1,11 +1,4 @@
-/**
- * docs/api-contract.md § Appointments.
- *
- * Simulated conditions owned here:
- *   - POST returns 409 SLOT_TAKEN when the slot is already booked
- *   - PATCH returns 409 when the status transition is not allowed
- */
-
+// POST returns 409 once a slot is booked; PATCH returns 409 on a bad transition.
 import { http, HttpResponse } from 'msw'
 
 import type { Appointment, AppointmentStatus, ConsultationType, UUID } from '@/types'

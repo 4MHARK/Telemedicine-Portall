@@ -1,12 +1,12 @@
 import { CalendarDays } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 
-import { EmptyState, ErrorState, LoadingSkeleton, PageHeader } from '@/components/shared'
+import { AsyncStatus, EmptyState, LoadingSkeleton, PageHeader } from '@/components/shared'
+import type { AsyncQuery } from '@/components/shared'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useProviders } from '@/features/providers'
 import { usePageTitle } from '@/hooks/use-page-title'
-import { ApiError } from '@/lib/apiClient'
 import { formatDateTime } from '@/lib/format'
 import type { Appointment, Provider } from '@/types'
 import { useAppointments } from './queries'
@@ -125,7 +125,14 @@ export default function AppointmentsPage() {
     )
   }
 
-  const pending = appointments.isPending || directory.isPending
+  // Two queries feed this page: the list, and the provider names on each row.
+  const status: AsyncQuery<Appointment[]> = {
+    isPending: appointments.isPending || directory.isPending,
+    isError: appointments.isError,
+    error: appointments.error,
+    data: appointments.isSuccess && directory.isSuccess ? appointments.data : undefined,
+    refetch: appointments.refetch,
+  }
 
   return (
     <>
@@ -139,44 +146,37 @@ export default function AppointmentsPage() {
         }
       />
 
-      {pending ? <LoadingSkeleton variant="list" count={4} /> : null}
-
-      {appointments.isError ? (
-        <ErrorState
-          title="Could not load appointments"
-          message={
-            appointments.error instanceof ApiError
-              ? appointments.error.message
-              : 'Appointments are unavailable right now.'
-          }
-          onRetry={() => void appointments.refetch()}
-        />
-      ) : null}
-
-      {appointments.isSuccess && directory.isSuccess ? (
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
-            <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
-            <TabsTrigger value="past">Past ({past.length})</TabsTrigger>
-          </TabsList>
-          <TabsContent value="upcoming" className="pt-4">
-            <AppointmentList
-              appointments={upcoming}
-              providers={providers}
-              emptyTitle="No upcoming appointments"
-              emptyDescription="Book a visit and it will appear here."
-            />
-          </TabsContent>
-          <TabsContent value="past" className="pt-4">
-            <AppointmentList
-              appointments={past}
-              providers={providers}
-              emptyTitle="No past appointments"
-              emptyDescription="Completed and cancelled visits will show up here."
-            />
-          </TabsContent>
-        </Tabs>
-      ) : null}
+      <AsyncStatus
+        query={status}
+        skeleton={<LoadingSkeleton variant="list" count={4} />}
+        errorTitle="Could not load appointments"
+        errorFallback="Appointments are unavailable right now."
+      >
+        {() => (
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsList>
+              <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
+              <TabsTrigger value="past">Past ({past.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="upcoming" className="pt-4">
+              <AppointmentList
+                appointments={upcoming}
+                providers={providers}
+                emptyTitle="No upcoming appointments"
+                emptyDescription="Book a visit and it will appear here."
+              />
+            </TabsContent>
+            <TabsContent value="past" className="pt-4">
+              <AppointmentList
+                appointments={past}
+                providers={providers}
+                emptyTitle="No past appointments"
+                emptyDescription="Completed and cancelled visits will show up here."
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+      </AsyncStatus>
     </>
   )
 }

@@ -7,21 +7,15 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/apiClient'
 import { AuthProvider } from '@/features/auth'
-// Direct path, not the barrel: the barrel re-exports DocumentsPage, and
-// importing it here would pull the page into the main chunk and defeat the
-// router's lazy import.
+// Direct import: the barrel re-exports DocumentsPage, which would break splitting.
 import { UploadProvider } from '@/features/documents/UploadProvider'
 import { ThemeProvider } from '@/features/theme'
 
-// Module-scope singletons: one cache and one head per app instance.
-// Query defaults are deliberately left at the library defaults — every
-// staleTime / refetchInterval in docs/state-matrix.md is set per query.
+// One cache and one head per app. Stale times are set per query.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // A 4xx will not fix itself; retrying it only delays the error UI. A 404
-      // provider otherwise sits behind three retries before the page can say
-      // "Provider not found".
+      // Don't retry 4xx — a 404 won't fix itself.
       retry: (failureCount, error) =>
         !(error instanceof ApiError && error.status >= 400 && error.status < 500) &&
         failureCount < 2,
@@ -42,11 +36,7 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   )
 }
 
-/**
- * The provider tree. ErrorBoundary sits outermost so a failure anywhere below
- * — including in another provider — still renders a usable screen; the token
- * classes in the fallback resolve against :root, so it is themed either way.
- */
+// ErrorBoundary outermost so a provider crash still renders something.
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>

@@ -1,9 +1,3 @@
-/**
- * Wizard state — Context + Reducer, never TanStack Query
- * (docs/state-matrix.md: "Scheduling wizard draft"). Pure, so it is testable
- * in isolation.
- */
-
 import type { ConsultationType } from '@/types'
 
 export const WIZARD_STEP_COUNT = 5

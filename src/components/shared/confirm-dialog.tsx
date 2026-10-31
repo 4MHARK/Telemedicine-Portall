@@ -13,26 +13,20 @@ import {
 } from '@/components/ui/dialog'
 
 export interface ConfirmDialogProps {
-  /** The element that opens the dialog, e.g. a Button. */
+  // The element that opens the dialog.
   trigger: ReactElement
   title: string
   description: string
   confirmLabel?: string
   cancelLabel?: string
   onConfirm: () => void
-  /** Styles the confirm button as destructive (cancel an appointment, delete a document). */
+  // Red confirm button.
   destructive?: boolean
-  /** Disables both buttons while the caller's mutation is in flight. */
+  // Disables both buttons while the mutation runs.
   isPending?: boolean
 }
 
-/**
- * Confirmation wrapper around the Base UI dialog, for the two irreversible-ish
- * actions in the app: cancelling an appointment and deleting a document.
- *
- * The dialog closes as soon as Confirm is pressed; the caller owns whatever
- * pending/error UI follows.
- */
+// Closes on confirm; the caller handles pending and error state.
 export function ConfirmDialog({
   trigger,
   title,
