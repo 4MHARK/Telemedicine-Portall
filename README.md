@@ -30,10 +30,10 @@ is no network traffic to a real API.
 
 ## Quality gates
 
-- 115 unit/integration tests, ~82.8% statement coverage, and per-directory
+- 118 unit/integration tests, ~83.0% statement coverage, and per-directory
   thresholds for reducers, schemas, hooks and API modules.
-- 7 Playwright flows covering auth redirects, upload progress/retry, and
-  optimistic chat.
+- 8 Playwright flows covering auth redirects, upload progress/retry,
+  appointment-scoped uploads, and optimistic chat.
 - CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, tests,
   build and E2E on every push or pull request to `develop` and `main`. It
   uploads the verified `dist/` artifact and the coverage report.
@@ -76,6 +76,9 @@ The Slidev deck in `deck/` is deployed separately and has its own
 ## Notes
 
 - Uploads use XHR rather than fetch, because fetch cannot report progress.
+- A document can be shared with a scheduled visit from the appointment detail
+  page or selected on the Documents tab; the visit association is stored on the
+  document and shown in both places.
 - Chat polls instead of using websockets; messages are merged by id so an optimistic send is never dropped.
 - The mock API adds 200–600 ms of latency on purpose, so loading states are real.
 - `docs/decisions.md` is the source of truth for every architectural choice;

@@ -8,6 +8,7 @@ import { usePageTitle } from '@/hooks/use-page-title'
 import { ApiError } from '@/lib/apiClient'
 import { formatDateTime } from '@/lib/format'
 import { useAppointment, useCancelAppointment } from './queries'
+import { AppointmentDocuments } from './AppointmentDocuments'
 import { AppointmentStatusBadge } from './status-badge'
 
 export default function AppointmentDetailPage() {
@@ -139,6 +140,8 @@ export default function AppointmentDetailPage() {
             </p>
           )}
         </section>
+
+        <AppointmentDocuments appointment={data} />
 
         {cancel.isError ? (
           <p

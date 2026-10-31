@@ -50,7 +50,8 @@ describe('documents', () => {
     await waitFor(() => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(), {
       timeout: 15_000,
     })
-    expect(await screen.findByText('Uploaded')).toBeInTheDocument()
+    // The queue row and the saved-document badge both read "Uploaded".
+    expect((await screen.findAllByText('Uploaded')).length).toBeGreaterThan(0)
 
     // the documents query is invalidated, so the list grows by one
     await waitFor(() => expect(docRows()).toHaveLength(before + 1))

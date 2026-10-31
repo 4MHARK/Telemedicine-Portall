@@ -8,11 +8,11 @@ import { readToken } from '@/lib/session'
 import type { UploadTask } from '@/types'
 import { initialUploadState, uploadReducer } from './reducer'
 import { UploadContext } from './upload-context'
-import type { UploadContextValue } from './upload-context'
+import type { EnqueueOptions, UploadContextValue } from './upload-context'
 import { ALLOWED_MIME_TYPES, MAX_BYTES, MAX_FILES } from './upload-limits'
 import { uploadWithXhr } from './xhr'
 
-function makeTask(file: File): UploadTask {
+function makeTask(file: File, appointmentId?: string): UploadTask {
   return {
     id: crypto.randomUUID(),
     fileName: file.name,
@@ -20,6 +20,7 @@ function makeTask(file: File): UploadTask {
     sizeBytes: file.size,
     progress: 0,
     status: 'queued',
+    ...(appointmentId ? { appointmentId } : {}),
     file,
   }
 }
@@ -49,6 +50,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           url: `${API_BASE_URL}/documents`,
           file: task.file,
           token: readToken(),
+          appointmentId: task.appointmentId,
           onProgress: (percent) => dispatch({ type: 'PROGRESS', id: task.id, progress: percent }),
         })
         dispatch({ type: 'SUCCESS', id: task.id, documentId: document.id })
@@ -65,12 +67,12 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   )
 
   const enqueue = useCallback(
-    (files: FileList | readonly File[]) => {
+    (files: FileList | readonly File[], options?: EnqueueOptions) => {
       const list = Array.from(files)
       const accepted: UploadTask[] = []
 
       list.forEach((file, index) => {
-        const task = makeTask(file)
+        const task = makeTask(file, options?.appointmentId)
         const rejection = rejectionFor(file, index)
         if (rejection) {
           dispatch({

@@ -62,7 +62,8 @@ Every decision here is frozen for the duration of the project. Reopening one req
 | 48 | Provider pagination | 12 per page on `/doctors`, controls in the page, page kept in `?page=` | closes row 26; the URL is already the filter source of truth | never |
 | 49 | Route error reset | the route boundary resets when `location.key` changes | without it, shell navigation cannot leave a page that crashed | never |
 | 50 | `?next` hardening | reject `//` and `\` prefixes | protocol-relative and backslash forms normalize to an open redirect | never |
-Note: Overall statement coverage is ~82.8% (115 tests). Per-directory thresholds all pass (100% on reducers/schemas/hooks, 95%+ on API). The `fail-*` upload retry is covered browser-only in Playwright due to a jsdom File cross-realm limitation.
+| 51 | Document sharing | uploads carry an optional `appointmentId`; the appointment detail page and the Documents tab expose it | makes “share with your provider” real; the contract, `Document` type and XHR transport already supported it | a real file-sharing or PHI system ships |
+Note: Overall statement coverage is ~83.0% (118 tests). Per-directory thresholds all pass (100% on reducers/schemas/hooks, 95%+ on API). The `fail-*` upload retry is covered browser-only in Playwright due to a jsdom File cross-realm limitation.
 
 Deployment note: the Netlify/Vercel configuration and the CI `dist/` artifact are in place. Publishing the live URL still requires connecting the repository to the hosting account; no credential is stored in the repo.
 
@@ -84,6 +85,7 @@ Deployment note: the Netlify/Vercel configuration and the CI `dist/` artifact ar
 3. Upload a document → see progress → see success badge.
 4. Upload a `fail-*` file → see error → click retry → see success.
 5. Send a chat message → appears optimistically → poll confirms → status flips to `sent`.
+6. Upload a document from an appointment → it appears on that visit as shared.
 
 ## Open Items
 

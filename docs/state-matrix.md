@@ -14,7 +14,7 @@
 | Appointment list | TanStack Query | memory cache | invalidated on create / cancel |
 | Appointment detail | TanStack Query | memory cache | invalidated on cancel |
 | Documents list | TanStack Query | memory cache | invalidated on upload success / delete |
-| **Upload queue** (`UploadTask[]`) | **Context + Reducer** | memory only | holds `File` refs; Query can't model transfer progress |
+| **Upload queue** (`UploadTask[]`) | **Context + Reducer** | memory only | holds `File` refs and the optional visit (`appointmentId`); Query can't model transfer progress |
 | Conversations list | TanStack Query | memory cache | `refetchInterval: 10_000`, background off |
 | Messages for conversation | TanStack Query | memory cache | `refetchInterval: 3_000`, background off; **merge by id** |
 | Scheduling wizard draft | Context + Reducer | memory only | reset on unmount / on successful submit |
