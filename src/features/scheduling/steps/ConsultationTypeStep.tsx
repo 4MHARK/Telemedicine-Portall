@@ -30,7 +30,7 @@ export function ConsultationTypeStep({ form, options }: ConsultationTypeStepProp
             'flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3 text-sm transition-colors',
             selected === type
               ? 'border-primary bg-primary/5'
-              : 'border-border hover:bg-surface-muted',
+              : 'border-input hover:bg-surface-muted',
           )}
         >
           <input

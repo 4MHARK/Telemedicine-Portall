@@ -1,6 +1,6 @@
 # Telemedicine Portal — Deck
 
-Slidev deck for the Phase 0 architecture review.
+Slidev deck for the final project presentation.
 
 ```bash
 npm install

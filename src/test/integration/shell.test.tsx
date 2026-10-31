@@ -61,5 +61,7 @@ describe('app shell', () => {
       'href',
       '#main-content',
     )
+    // The target must be focusable, or the skip link only scrolls.
+    expect(document.getElementById('main-content')).toHaveAttribute('tabindex', '-1')
   })
 })

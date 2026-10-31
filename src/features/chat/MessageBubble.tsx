@@ -13,15 +13,15 @@ export interface MessageBubbleProps {
 function StatusIcon({ message }: { message: ChatMessage }) {
   switch (message.status) {
     case 'sending':
-      return <Clock className="size-3" aria-label="Sending" />
+      return <Clock className="size-3" role="img" aria-label="Sending" />
     case 'sent':
-      return <Check className="size-3" aria-label="Sent" />
+      return <Check className="size-3" role="img" aria-label="Sent" />
     case 'delivered':
-      return <CheckCheck className="size-3" aria-label="Delivered" />
+      return <CheckCheck className="size-3" role="img" aria-label="Delivered" />
     case 'read':
-      return <CheckCheck className="text-primary size-3" aria-label="Read" />
+      return <CheckCheck className="text-primary size-3" role="img" aria-label="Read" />
     case 'failed':
-      return <AlertCircle className="text-danger size-3" aria-label="Failed" />
+      return <AlertCircle className="text-danger size-3" role="img" aria-label="Failed" />
   }
 }
 

@@ -47,6 +47,7 @@ export function ReviewStep({
             <button
               type="button"
               onClick={() => onEdit(row.step)}
+              aria-label={`Edit ${row.label.toLowerCase()}`}
               className="text-primary shrink-0 text-xs underline-offset-2 hover:underline"
             >
               Edit

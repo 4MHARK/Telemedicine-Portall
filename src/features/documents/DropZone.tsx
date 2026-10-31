@@ -36,7 +36,7 @@ export function DropZone({ onFiles }: { onFiles: (files: readonly File[]) => voi
       }}
       onDrop={handleDrop}
       className={cn(
-        'border-border bg-surface-muted/40 flex flex-col items-center gap-3 rounded-lg border border-dashed px-6 py-10 text-center transition-colors',
+        'border-border-strong bg-surface-muted/40 flex flex-col items-center gap-3 rounded-lg border border-dashed px-6 py-10 text-center transition-colors',
         dragging && 'border-primary bg-primary/5',
       )}
     >
@@ -53,6 +53,9 @@ export function DropZone({ onFiles }: { onFiles: (files: readonly File[]) => voi
         multiple
         accept={ALLOWED_MIME_TYPES.join(',')}
         className="sr-only"
+        // The visible "Choose files" button drives the picker; keeping the
+        // hidden input out of the tab order avoids an invisible focus stop.
+        tabIndex={-1}
         aria-label="Choose files to upload"
         onChange={(event) => {
           const files = event.target.files ? Array.from(event.target.files) : []

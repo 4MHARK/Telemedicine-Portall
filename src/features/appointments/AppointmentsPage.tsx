@@ -25,7 +25,7 @@ function AppointmentRow({
     <li>
       <Link
         to={`/appointments/${appointment.id}`}
-        className="border-border hover:bg-surface-muted flex items-center gap-4 rounded-lg border p-4 transition-colors"
+        className="border-input hover:bg-surface-muted flex items-center gap-4 rounded-lg border p-4 transition-colors"
       >
         {provider ? (
           <img
@@ -126,11 +126,13 @@ export default function AppointmentsPage() {
   }
 
   // Two queries feed this page: the list, and the provider names on each row.
+  // The directory is best-effort: a failed name lookup must not hold the
+  // appointment list behind a permanent skeleton. Rows fall back to "Provider".
   const status: AsyncQuery<Appointment[]> = {
-    isPending: appointments.isPending || directory.isPending,
+    isPending: appointments.isPending,
     isError: appointments.isError,
     error: appointments.error,
-    data: appointments.isSuccess && directory.isSuccess ? appointments.data : undefined,
+    data: appointments.data,
     refetch: appointments.refetch,
   }
 
@@ -155,8 +157,18 @@ export default function AppointmentsPage() {
         {() => (
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList>
-              <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
-              <TabsTrigger value="past">Past ({past.length})</TabsTrigger>
+              <TabsTrigger
+                value="upcoming"
+                className="data-active:bg-primary data-active:text-primary-fg dark:data-active:bg-primary dark:data-active:text-primary-fg"
+              >
+                Upcoming ({upcoming.length})
+              </TabsTrigger>
+              <TabsTrigger
+                value="past"
+                className="data-active:bg-primary data-active:text-primary-fg dark:data-active:bg-primary dark:data-active:text-primary-fg"
+              >
+                Past ({past.length})
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="upcoming" className="pt-4">
               <AppointmentList

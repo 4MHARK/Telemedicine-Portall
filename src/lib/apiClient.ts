@@ -1,6 +1,7 @@
 // All API calls go through here: base /api, bearer token, typed ApiError.
 // A 401 clears the session and redirects to login.
 import type { ApiErrorBody } from '@/types'
+import { LOGIN_HREF, stripBasePath } from './base-path'
 import { clearSession, readToken } from './session'
 
 export const API_BASE_URL = '/api'
@@ -25,18 +26,17 @@ export class ApiError extends Error {
   }
 }
 
-export const LOGIN_PATH = '/auth/login'
-
 // Clear the session and bounce to login with ?next.
 // /auth/* is skipped — a failed login is a 401 too, and should reach the form.
 function handleUnauthorized(): void {
   clearSession()
 
   const { pathname, search } = window.location
-  if (pathname === LOGIN_PATH) return
+  if (pathname === LOGIN_HREF) return
 
-  const next = encodeURIComponent(`${pathname}${search}`)
-  window.location.assign(`${LOGIN_PATH}?next=${next}`)
+  // ?next is app-relative; the login route prepends the router basename.
+  const next = encodeURIComponent(`${stripBasePath(pathname)}${search}`)
+  window.location.assign(`${LOGIN_HREF}?next=${next}`)
 }
 
 async function toApiError(response: Response): Promise<ApiError> {

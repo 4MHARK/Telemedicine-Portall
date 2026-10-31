@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, main]
   pull_request:
-    branches: [develop]
+    branches: [develop, main]
   workflow_dispatch:
 
 concurrency:
@@ -33,6 +33,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Format check
+        run: npm run format:check
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -41,6 +44,15 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # The deployable artifact, so a hosting integration or a manual
+      # deployment can take exactly what CI verified.
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
 
       # Kept even on failure so a threshold miss is inspectable.
       - name: Upload coverage

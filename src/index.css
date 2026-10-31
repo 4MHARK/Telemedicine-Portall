@@ -80,6 +80,8 @@
   --accent: var(--color-surface-muted);
   --accent-foreground: var(--color-text);
   --destructive: var(--color-danger);
+  --destructive-hover: var(--color-danger-hover);
+  --destructive-foreground: var(--color-danger-fg);
   --border: var(--color-border);
   --input: var(--color-border-strong);
   --ring: var(--color-focus-ring);
@@ -107,6 +109,8 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-input: var(--input);
   --color-ring: var(--ring);
 }

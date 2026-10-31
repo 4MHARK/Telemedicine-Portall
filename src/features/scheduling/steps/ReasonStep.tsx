@@ -14,7 +14,7 @@ export function ReasonStep({ form }: { form: UseFormReturn<WizardValues> }) {
         rows={5}
         maxLength={500}
         aria-invalid={error ? true : undefined}
-        className="border-border bg-surface focus-visible:border-ring w-full rounded-md border px-3 py-2 text-sm outline-none"
+        className="border-input bg-surface focus-visible:border-ring w-full rounded-md border px-3 py-2 text-sm outline-none"
         placeholder="A sentence or two is enough."
         {...form.register('reason')}
       />

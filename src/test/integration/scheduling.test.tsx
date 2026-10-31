@@ -34,8 +34,12 @@ describe('scheduling wizard', () => {
     )
     await userEvent.click(screen.getByRole('button', { name: 'Next' }))
 
-    // 4 — review shows what was chosen
+    // 4 — review shows what was chosen, with a distinct name per Edit button
     expect(await screen.findByText('Persistent headaches for two weeks')).toBeInTheDocument()
+    const edits = screen.getAllByRole('button', { name: /^Edit / })
+    expect(edits).toHaveLength(4)
+    expect(new Set(edits.map((button) => button.getAttribute('aria-label'))).size).toBe(4)
+
     await userEvent.click(screen.getByRole('button', { name: 'Next' }))
 
     // 5 — confirm
@@ -45,6 +49,10 @@ describe('scheduling wizard', () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toMatch(/^\/appointments\/apt_new_\d+$/),
     )
+    // Wait for the lazy detail page, not just the URL, so this also covers
+    // the appointment detail route after a successful booking.
+    expect(await screen.findByRole('heading', { name: 'Appointment detail' })).toBeInTheDocument()
+    expect(await screen.findByText('Persistent headaches for two weeks')).toBeInTheDocument()
   })
 
   it('blocks advancing past the slot step until a slot is chosen', async () => {

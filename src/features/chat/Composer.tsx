@@ -42,7 +42,7 @@ export function Composer({
           }
         }}
         placeholder="Write a message…"
-        className="border-border bg-surface focus-visible:border-ring max-h-32 min-h-9 w-full resize-y rounded-md border px-3 py-2 text-sm outline-none"
+        className="border-input bg-surface focus-visible:border-ring max-h-32 min-h-9 w-full resize-y rounded-md border px-3 py-2 text-sm outline-none"
       />
       <Button type="submit" disabled={!canSend}>
         Send

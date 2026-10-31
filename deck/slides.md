@@ -1,71 +1,93 @@
 ---
 theme: default
-title: Telemedicine Portal — Architecture & Build Plan
+title: Telemedicine Portal
 highlighter: shiki
-lineNumbers: true
 transition: slide-left
 fonts:
   sans: Inter
   mono: JetBrains Mono
-drawings:
-  persist: false
-layout: center
 ---
 
+<!-- Slide 1 -->
 # Telemedicine & Virtual Care Patient Portal
 
-[Your Name]\
-Student ID: [Your ID]
+Ademola David-Mark\
+Student ID: ALT/SOE/TIN/025/0262
 
 ---
-layout: default
+
+<!-- Slide 2 -->
+# The Patient Journey
+
+<div class="text-2xl mt-12 space-y-6">
+  <div><strong>1.</strong> Search for a provider by specialty & availability</div>
+  <div><strong>2.</strong> Schedule an appointment via a 5-step wizard</div>
+  <div><strong>3.</strong> Upload secure medical documents</div>
+  <div><strong>4.</strong> Chat with the provider</div>
+</div>
+
 ---
 
-# What the Project Does
-
-- Provider search
-- Multi-step scheduling
-- Secure document uploads with progress
-- Live chat simulation
-
----
-layout: default
----
-
+<!-- Slide 3 -->
 # The Stack
 
 - React 19 + TypeScript strict
-- TanStack Query
+- TanStack Query (Server state)
 - Tailwind v4 + shadcn/ui
-- MSW v2
+- MSW v2 (Mock API)
 - Vitest + Playwright
 
 ---
-layout: default
+
+<!-- Slide 4 -->
+# The UI in Action
+
+<div class="grid grid-cols-2 gap-4 mt-8">
+  <div class="border rounded p-2">
+    <img src="/search.png" alt="Search" class="w-full h-auto" />
+    <p class="text-center text-sm mt-2">Provider Search</p>
+  </div>
+  <div class="border rounded p-2">
+    <img src="/wizard.png" alt="Wizard" class="w-full h-auto" />
+    <p class="text-center text-sm mt-2">Scheduling Wizard</p>
+  </div>
+</div>
+
 ---
 
-# The Hardest Problem
+<!-- Slide 5 -->
+# Architecture & State Strategy
 
-Document uploads must report real progress.\
-fetch() cannot report upload progress.
+**Server State:** TanStack Query
+* Providers, appointments, documents
 
-→ Built the upload queue on XHR.\
-→ Kept progress state in a Reducer, not Query.
+**Client State:** Context + Reducer
+* Scheduling wizard, upload queue
+
+**Rule:** Never store the same data in two places.
 
 ---
-layout: default
+
+<!-- Slide 6 -->
+# Handling Edge Cases
+
+- **Real-time progress:** Custom XHR wrapper for document uploads.
+- **Optimistic UI:** Chat messages merge by ID so polling never wipes a user's text.
+- **Route Guards:** `useBlocker` prevents leaving the wizard mid-booking.
+
 ---
 
-# Built & Verified
+<!-- Slide 7 -->
+# Reliability & Testing
 
-- 3 phases completed
-- 11 routes
-- 4 features end-to-end
-- 100% logic coverage on reducers & schemas
-- E2E tested
+- **100% logic coverage** on reducers & validation
+- **E2E Tested** for critical flows (Auth, Uploads, Chat)
+- **Responsive** across mobile, tablet, and desktop
+- **Accessible** with focus states and ARIA
 
 ---
 layout: center
 ---
 
+<!-- Slide 8 -->
 # Questions?

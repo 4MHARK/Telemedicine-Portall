@@ -51,6 +51,17 @@ describe('auth', () => {
     expect(await screen.findByRole('heading', { name: 'Documents' })).toBeInTheDocument()
   })
 
+  it('does not follow a backslash ?next as an open redirect', async () => {
+    const { router } = renderApp('/auth/login?next=%2F%5Cevil.example')
+
+    await userEvent.type(await screen.findByLabelText('Email'), 'nadia@example.com')
+    await userEvent.type(screen.getByLabelText('Password'), 'demo')
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/doctors'))
+    expect(router.state.location.pathname).not.toContain('evil')
+  })
+
   it('an expired session is treated as anonymous', async () => {
     const { router } = renderApp('/profile', { authed: false })
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()

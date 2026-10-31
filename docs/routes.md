@@ -27,7 +27,8 @@ Router: React Router 7 (data router). Guards via route `loader`, not wrapper com
 │   └── login                       public
 ├── doctors                         public
 │   └── :providerId                 public
-├── schedule/:providerId            protected   ← wizard (see route table)├── appointments                    protected
+├── schedule/:providerId            protected   ← wizard (see route table)
+├── appointments                    protected
 │   └── :id                         protected
 ├── documents                       protected
 ├── messages                        protected
@@ -49,11 +50,12 @@ The login route reads `?next=` and redirects there after success. Default fallba
 
 ## Global 401 Handler
 
-`apiClient` intercepts any `401` response:
+`apiClient` intercepts any `401` response on a non-`/auth/*` route:
 
-1. Clear `localStorage` session key.
+1. Clear the `localStorage` session key.
 2. Redirect to `/auth/login?next=<current path>`.
-3. Do **not** throw further — the redirect is terminal for that request.
+3. Still throw the typed `ApiError`, so the in-flight query stops and does not
+   render stale data behind the redirect.
 
 This is the single source of truth for session invalidation. Route guards handle navigation; the 401 handler handles runtime token death mid-session.
 

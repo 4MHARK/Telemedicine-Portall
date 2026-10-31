@@ -42,6 +42,26 @@ describe('doctors list', () => {
     }
   })
 
+  it('paginates through the URL and keeps the controls discoverable', async () => {
+    const { router } = renderApp('/doctors')
+    await screen.findByText(/Showing 12 of 40 providers/)
+
+    expect(screen.getByText('Page 1 of 4')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Provider pagination' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+    expect(await screen.findByText('Page 2 of 4')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?page=2')
+    expect(cardCount()).toBe(12)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Previous' }))
+
+    expect(await screen.findByText('Page 1 of 4')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('')
+  })
+
   it('shows ErrorState when the fetch fails, then recovers on retry', async () => {
     server.use(
       http.get('/api/providers', () =>

@@ -6,6 +6,7 @@ import type { LoaderFunctionArgs, RouteObject } from 'react-router'
 import { RootLayout } from '@/app/layout'
 import { RouteBoundary, RouteErrorPage } from '@/app/route-error'
 import { LoadingSkeleton } from '@/components/shared'
+import { APP_BASE_PATH, stripBasePath } from '@/lib/base-path'
 import { isTokenUsable } from '@/lib/jwt'
 import { readToken } from '@/lib/session'
 
@@ -29,7 +30,8 @@ function requireAuth({ request }: LoaderFunctionArgs) {
   if (isTokenUsable(readToken())) return null
 
   const url = new URL(request.url)
-  const next = encodeURIComponent(`${url.pathname}${url.search}`)
+  // request.url includes the deployment base; the login route does not.
+  const next = encodeURIComponent(`${stripBasePath(url.pathname)}${url.search}`)
   throw redirect(`${LOGIN_PATH}?next=${next}`)
 }
 
@@ -95,4 +97,6 @@ export const routes: RouteObject[] = [
   },
 ]
 
-export const router = createBrowserRouter(routes)
+// Vite's BASE_URL keeps deep links working when the app is deployed under a
+// subpath (e.g. GitHub Pages); it is "/" everywhere else.
+export const router = createBrowserRouter(routes, { basename: APP_BASE_PATH || '/' })

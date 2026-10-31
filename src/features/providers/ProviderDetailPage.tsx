@@ -143,6 +143,22 @@ export default function ProviderDetailPage() {
 
             {slots.isPending ? (
               <LoadingSkeleton variant="list" count={2} />
+            ) : slots.isError ? (
+              <div role="alert" className="text-danger flex flex-col gap-2 text-sm">
+                <p>
+                  {slots.error instanceof ApiError
+                    ? slots.error.message
+                    : 'Availability is unavailable right now.'}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  onClick={() => void slots.refetch()}
+                >
+                  Try again
+                </Button>
+              </div>
             ) : nextSlots.length === 0 ? (
               <p className="text-text-muted text-sm">No availability in the next 7 days.</p>
             ) : (

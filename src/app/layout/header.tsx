@@ -17,14 +17,11 @@ import { useTheme } from '@/features/theme'
 /**
  * Logo, the signed-in patient's menu, and the theme toggle.
  *
- * The patient comes from GET /auth/me rather than the auth Context, which is
- * still the Phase 1 placeholder — the query reflects whatever token is in
- * storage, which is what the login flow writes.
+ * Reads the auth Context (decisions.md row 41): the provider hydrates from
+ * storage on boot, so no per-page GET /auth/me is needed.
  */
 export function Header() {
   const { theme, toggleTheme } = useTheme()
-  // The auth Context now hydrates from storage, so the header reads it rather
-  // than issuing a GET /auth/me.
   const { session } = useAuth()
   const patient = session?.patient
   const isDark = theme === 'dark'
