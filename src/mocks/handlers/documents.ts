@@ -2,7 +2,7 @@
 import { http, HttpResponse } from 'msw'
 
 import type { Document } from '@/types'
-import { documents } from '../db'
+import { appointments, documents } from '../db'
 import { apiError, authenticate, latency } from './shared'
 
 const MAX_BYTES = 10 * 1024 * 1024
@@ -75,6 +75,16 @@ export const documentHandlers = [
       return apiError(415, 'UNSUPPORTED_TYPE', `Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}.`)
     }
 
+    // The optional appointmentId must name a visit this patient owns.
+    const appointmentId = form.get('appointmentId')
+    if (typeof appointmentId === 'string' && appointmentId) {
+      const appointment = appointments.find((a) => a.id === appointmentId)
+      if (!appointment) return apiError(404, 'NOT_FOUND', 'Appointment not found.')
+      if (appointment.patientId !== auth.patientId) {
+        return apiError(403, 'FORBIDDEN', 'This appointment belongs to another patient.')
+      }
+    }
+
     if (file.name.startsWith('fail-')) {
       if (!failUploadAlreadyServed) {
         failUploadAlreadyServed = true
@@ -83,7 +93,6 @@ export const documentHandlers = [
     }
 
     created += 1
-    const appointmentId = form.get('appointmentId')
 
     const document: Document = {
       id: `doc_new_${created}`,

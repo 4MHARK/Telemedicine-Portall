@@ -31,6 +31,8 @@ export interface UploadTask {
   progress: number // 0–100
   status: DocumentStatus
   documentId?: UUID // set on success
+  /** Visit this upload is shared with. Survives retry with the task. */
+  appointmentId?: UUID
   failureReason?: string
   file: File
 }

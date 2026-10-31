@@ -79,6 +79,8 @@ Errors: always `ApiErrorBody` shape with the correct HTTP status.
 - **Content-Type:** `multipart/form-data`
 - **Fields:** `file` (required), `appointmentId?` (optional)
 - **Res 201:** `Document` (status `uploaded`)
+- **Res 404:** `appointmentId` does not exist
+- **Res 403:** `appointmentId` belongs to another patient
 - **Res 413:** file too large (> 10 MB)
 - **Res 415:** mime type not allowed (`application/pdf`, `image/png`, `image/jpeg`)
 - **Transport:** XHR only. MSW cannot emit real upload progress — the client emits synthetic ticks in DEV.
