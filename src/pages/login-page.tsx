@@ -10,11 +10,20 @@ import { loginSchema } from '@/features/auth/schemas'
 import type { LoginValues } from '@/features/auth/schemas'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { ApiError } from '@/lib/apiClient'
+import { stripBasePath } from '@/lib/base-path'
 
-/** Only same-origin paths, so ?next cannot be used as an open redirect. */
+/**
+ * Only same-origin paths, so ?next cannot be used as an open redirect.
+ * Backslashes are rejected too: browsers normalise `/\evil.test` to a
+ * protocol-relative URL even though it starts with a single slash. A path that
+ * already carries the deployment base is normalised to an app-relative one so
+ * the router does not prepend the basename twice.
+ */
 function safeNext(value: string | null): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/doctors'
-  return value
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+    return '/doctors'
+  }
+  return stripBasePath(value) || '/'
 }
 
 export default function LoginPage() {

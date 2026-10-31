@@ -50,13 +50,13 @@ function SegmentedFilter({ label, options, selected, onChange }: SegmentedFilter
           const next = values[values.length - 1]
           onChange(!next || next === 'any' ? null : next)
         }}
-        className="rounded-md border p-0.5"
+        className="border-input rounded-md border p-0.5"
       >
         {options.map((option) => (
           <ToggleGroupItem
             key={option.value}
             value={option.value}
-            className="rounded px-2.5 text-xs"
+            className="aria-pressed:bg-primary aria-pressed:text-primary-fg rounded px-2.5 text-xs"
           >
             {option.label}
           </ToggleGroupItem>

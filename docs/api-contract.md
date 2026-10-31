@@ -2,7 +2,9 @@
 
 Base URL: `/api`
 Content type: `application/json` except uploads (`multipart/form-data`).
-Auth: `Authorization: Bearer <token>` on every route except `/auth/*`.
+Auth: `Authorization: Bearer <token>` on every route except `/auth/*`,
+`/specialties`, and `/providers*`. The two public data endpoints are required
+by the public `/doctors` routes (decisions.md row 20).
 Errors: always `ApiErrorBody` shape with the correct HTTP status.
 
 ## Auth

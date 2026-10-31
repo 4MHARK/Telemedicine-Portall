@@ -13,8 +13,8 @@ export function useDocuments() {
 /**
  * docs/state-matrix.md, Invalidation Rules: delete -> documents.list.
  *
- * Upload is absent on purpose — rows 6-8 give the upload transport to XHR with
- * progress in Context + Reducer, and that arrives in Phase 3.
+ * Upload is absent on purpose — decisions.md rows 6-8 give the upload
+ * transport to XHR with progress in Context + Reducer, not TanStack Query.
  */
 export function useDeleteDocument() {
   const queryClient = useQueryClient()

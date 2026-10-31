@@ -1,9 +1,14 @@
 /*
- * Design tokens — transcribed verbatim from docs/design-tokens.md.
+ * Design tokens — from docs/design-tokens.md.
  *
  * Tailwind v4 CSS-first: no tailwind.config.js. Every token below is
  * semantic (named by purpose, never by appearance). Components must never
  * use palette colors (bg-blue-500) directly — only these tokens.
+ *
+ * The lightness ramp for text-subtle, danger, border-strong and focus-ring is
+ * tuned so the documented accessibility contract holds: 4.5:1 for body text
+ * and 3:1 for interactive boundaries. See the contrast notes in
+ * docs/design-tokens.md.
  *
  * Dark mode is enabled (decisions.md row 14). Every *color* token is
  * re-declared inside `.dark`; non-color tokens (radius, type scale, fonts)
@@ -16,12 +21,14 @@
   --color-surface-muted: oklch(97% 0 0);
   --color-surface-raised: oklch(100% 0 0);
   --color-border: oklch(90% 0 0);
-  --color-border-strong: oklch(80% 0 0);
+  /* 3.11:1 on surface — interactive boundaries (inputs) need 3:1. */
+  --color-border-strong: oklch(66% 0 0);
 
   /* Text */
   --color-text: oklch(20% 0 0);
   --color-text-muted: oklch(45% 0 0);
-  --color-text-subtle: oklch(60% 0 0);
+  /* 5.06:1 on surface, 4.64:1 on surface-muted — passes 4.5:1 at text-xs. */
+  --color-text-subtle: oklch(54% 0 0);
   --color-text-inverse: oklch(98% 0 0);
 
   /* Brand */
@@ -34,13 +41,17 @@
   --color-success-fg: oklch(98% 0 0);
   --color-warning: oklch(75% 0.15 85);
   --color-warning-fg: oklch(20% 0 0);
-  --color-danger: oklch(60% 0.2 25);
+  /* 5.15:1 on surface and 4.74:1 on a 10% danger tint; white on it passes. */
+  --color-danger: oklch(56% 0.2 25);
+  /* Darker, not a tint: white on it stays at 6.3:1 on hover. */
+  --color-danger-hover: oklch(50% 0.2 25);
   --color-danger-fg: oklch(98% 0 0);
   --color-info: oklch(65% 0.15 230);
   --color-info-fg: oklch(98% 0 0);
 
   /* Focus */
-  --color-focus-ring: oklch(55% 0.18 250 / 0.5);
+  /* Solid, not translucent: 4.88:1 on surface so the ring is always visible. */
+  --color-focus-ring: oklch(55% 0.18 250);
 
   /* Radius */
   --radius-sm: 0.25rem;
@@ -83,7 +94,8 @@
   --color-surface-muted: oklch(23% 0 0);
   --color-surface-raised: oklch(26% 0 0);
   --color-border: oklch(32% 0 0);
-  --color-border-strong: oklch(45% 0 0);
+  /* 3.87:1 on dark surface (interactive boundaries need 3:1). */
+  --color-border-strong: oklch(55% 0 0);
 
   /* Text */
   --color-text: oklch(97% 0 0);
@@ -102,12 +114,15 @@
   --color-warning: oklch(80% 0.14 85);
   --color-warning-fg: oklch(18% 0 0);
   --color-danger: oklch(68% 0.18 25);
+  /* Lighter in dark mode: dark ink on it stays at 7.55:1 on hover. */
+  --color-danger-hover: oklch(74% 0.18 25);
   --color-danger-fg: oklch(18% 0 0);
   --color-info: oklch(72% 0.13 230);
   --color-info-fg: oklch(18% 0 0);
 
   /* Focus */
-  --color-focus-ring: oklch(68% 0.16 250 / 0.6);
+  /* Solid, not translucent: 6.54:1 on dark surface. */
+  --color-focus-ring: oklch(68% 0.16 250);
 
   /* Shadows read weaker against dark surfaces, so raise their opacity. */
   --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.4);

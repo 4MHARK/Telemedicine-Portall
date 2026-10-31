@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import { Outlet, RouterProvider, createMemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -84,6 +84,19 @@ describe('route error handling', () => {
     for (const slot of ['side-nav', 'icon-rail', 'bottom-nav']) {
       expect(container.querySelector(`[data-slot="${slot}"]`)).not.toBeNull()
     }
+  })
+
+  it('recovers when the user navigates away from a crashed page', async () => {
+    const { router } = renderAt('/boom')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('kaboom from a page')
+
+    await act(async () => {
+      await router.navigate('/fine')
+    })
+
+    expect(await screen.findByRole('heading', { name: 'All good' })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('a thrown 404 response renders the router error page', async () => {

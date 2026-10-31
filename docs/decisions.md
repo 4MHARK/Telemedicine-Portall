@@ -56,7 +56,15 @@ Every decision here is frozen for the duration of the project. Reopening one req
 | 42 | Wizard slot range | 7-day/14-day ranges computed once in a state initializer | recomputing per render mints a new query key and refetches forever | never |
 | 43 | Playwright browser | `channel: 'chrome'` | uses installed Chrome instead of downloading a browser binary | never |
 | 44 | Test timing | `asyncUtilTimeout` raised to 15s | mandated 200–600ms mock latency puts some pages past the 1s default | MSW latency removed |
-Note: Overall statement coverage is 75.13%. Per-directory thresholds all pass (100% on reducers/schemas/hooks, 95%+ on API). The `fail-*` upload retry is covered browser-only in Playwright due to a jsdom File cross-realm limitation.
+| 45 | Production mocks | MSW starts in every build unless `VITE_DISABLE_MOCKS=true` | the deliverable is a mock-only demo; a production SPA with the worker off has no backend | a real backend ships |
+| 46 | Deployment | Netlify and Vercel SPA configs at the repo root; CI uploads the verified `dist/` | deep links need an `/index.html` rewrite; the artifact CI builds is the one that deploys | hosting target changes |
+| 47 | Accessibility contrast | text-subtle, danger, border-strong and focus-ring tuned to the documented ratios; destructive controls use a solid danger fill | the old values missed 4.5:1 text and 3:1 control-boundary contrast in light and dark | palette revisited |
+| 48 | Provider pagination | 12 per page on `/doctors`, controls in the page, page kept in `?page=` | closes row 26; the URL is already the filter source of truth | never |
+| 49 | Route error reset | the route boundary resets when `location.key` changes | without it, shell navigation cannot leave a page that crashed | never |
+| 50 | `?next` hardening | reject `//` and `\` prefixes | protocol-relative and backslash forms normalize to an open redirect | never |
+Note: Overall statement coverage is ~82.8% (115 tests). Per-directory thresholds all pass (100% on reducers/schemas/hooks, 95%+ on API). The `fail-*` upload retry is covered browser-only in Playwright due to a jsdom File cross-realm limitation.
+
+Deployment note: the Netlify/Vercel configuration and the CI `dist/` artifact are in place. Publishing the live URL still requires connecting the repository to the hosting account; no credential is stored in the repo.
 
 ## Testing Coverage Targets
 
@@ -68,7 +76,6 @@ Note: Overall statement coverage is 75.13%. Per-directory thresholds all pass (1
 | `src/features/**/api.ts` | 80% |
 | `src/components/primitives/**` | no threshold |
 | Everything else | no global minimum |
-Note: overall statement coverage is 73.31%. Per-directory thresholds all pass. Chat's hooks (44.44%) are unreachable until the Messages page exists (Phase 3).
 
 ## E2E Flows (Playwright)
 
@@ -80,5 +87,12 @@ Note: overall statement coverage is 73.31%. Per-directory thresholds all pass. C
 
 ## Open Items
 
-- [ ] **shadcn/Base UI spike** — 30 min before Phase 1. Install `button`, `dialog`, `sheet`, `tabs`, `form` with Base UI; confirm all render. If any fails, document the fallback in this table.
-- [ ] Decide dark mode (row 14).
+All resolved before final defense:
+
+- [x] **shadcn/Base UI spike** — delivered; `field` is the form primitive (row 19).
+- [x] Decide dark mode — enabled (row 14).
+- [x] Provider pagination controls — delivered (row 48).
+- [x] Production mock API + deployment config — delivered (rows 45–46).
+- [x] WCAG audit — manual axe-core 4.10.2 run (WCAG 2.2 A/AA): 0 violations on
+  login, doctors, provider detail, appointments, documents, messages, chat,
+  profile and scheduling; desktop and mobile, light and dark.

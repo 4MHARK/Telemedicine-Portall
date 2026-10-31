@@ -1,6 +1,6 @@
 import { ErrorBoundary } from 'react-error-boundary'
 import type { FallbackProps } from 'react-error-boundary'
-import { isRouteErrorResponse, Outlet, useRouteError } from 'react-router'
+import { isRouteErrorResponse, Outlet, useLocation, useRouteError } from 'react-router'
 
 import { ErrorState, PageHeader } from '@/components/shared'
 import { usePageTitle } from '@/hooks/use-page-title'
@@ -51,10 +51,14 @@ function RenderErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return <Fallback title={title} message={message} onRetry={resetErrorBoundary} />
 }
 
-// Keeps the shell around a page that throws.
+// Keeps the shell around a page that throws. resetKeys clears the caught error
+// when the route changes, so the navigation in the shell can actually leave a
+// crashed page instead of leaving the user stuck on the fallback.
 export function RouteBoundary() {
+  const location = useLocation()
+
   return (
-    <ErrorBoundary FallbackComponent={RenderErrorFallback}>
+    <ErrorBoundary FallbackComponent={RenderErrorFallback} resetKeys={[location.key]}>
       <Outlet />
     </ErrorBoundary>
   )

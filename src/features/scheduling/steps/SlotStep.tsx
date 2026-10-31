@@ -69,7 +69,7 @@ export function SlotStep({ form, providerId, range }: SlotStepProps) {
                     'rounded-md border px-3 py-1.5 text-sm transition-colors',
                     selected === slot.id
                       ? 'border-primary bg-primary text-primary-fg'
-                      : 'border-border hover:bg-surface-muted',
+                      : 'border-input hover:bg-surface-muted',
                   )}
                 >
                   {formatDateTime(slot.start)}

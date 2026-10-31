@@ -48,20 +48,54 @@ export default function DoctorsListPage() {
           />
         }
       >
-        {(data) => (
-          <>
-            <p className="text-text-muted mb-4 text-sm" aria-live="polite">
-              Showing {data.items.length} of {data.total} providers
-            </p>
-            <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 xl:grid-cols-3">
-              {data.items.map((provider) => (
-                <li key={provider.id}>
-                  <DoctorCard provider={provider} specialties={specialties.data ?? []} />
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        {(data) => {
+          const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize))
+
+          return (
+            <>
+              <p className="text-text-muted mb-4 text-sm" aria-live="polite">
+                Showing {data.items.length} of {data.total} providers
+              </p>
+              <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 xl:grid-cols-3">
+                {data.items.map((provider) => (
+                  <li key={provider.id}>
+                    <DoctorCard provider={provider} specialties={specialties.data ?? []} />
+                  </li>
+                ))}
+              </ul>
+
+              {/* docs/decisions.md row 26: pagination controls are Phase 3. */}
+              {totalPages > 1 ? (
+                <nav
+                  aria-label="Provider pagination"
+                  className="mt-6 flex flex-wrap items-center justify-between gap-3"
+                >
+                  <p className="text-text-muted text-sm" aria-live="polite">
+                    Page {data.page} of {totalPages}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => filterState.setPage(data.page - 1)}
+                      disabled={data.page <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => filterState.setPage(data.page + 1)}
+                      disabled={!data.hasNext}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </nav>
+              ) : null}
+            </>
+          )
+        }}
       </AsyncStatus>
     </>
   )

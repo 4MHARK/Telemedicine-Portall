@@ -14,6 +14,24 @@ coverage/
 .env.*
 !.env.example
 
+# Secrets / local credentials — never commit these
+*.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+id_rsa*
+id_ed25519*
+.ssh/
+.npmrc
+
+# Hosting metadata
+.netlify/
+.vercel/
+
+# TypeScript build cache
+*.tsbuildinfo
+
 # Logs
 logs
 *.log

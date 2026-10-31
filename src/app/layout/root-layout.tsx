@@ -30,7 +30,8 @@ export function RootLayout({ children, currentPath }: RootLayoutProps) {
       <div className="flex flex-1">
         <SideNav currentPath={pathname} />
         <IconRail currentPath={pathname} />
-        <main id="main-content" className="min-w-0 flex-1 pb-16 md:pb-0">
+        {/* tabIndex -1 makes the skip link move focus, not just scroll. */}
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 pb-16 md:pb-0">
           <div className="mx-auto max-w-[1400px] px-4 py-6 lg:px-6">{children}</div>
         </main>
       </div>

@@ -14,10 +14,10 @@ import { fetchSpecialties } from './specialties/api'
 import { clearSession } from '@/lib/session'
 
 /**
- * Exercises the feature API layer directly. The chat, appointments and
- * documents screens are Phase 3 placeholders, so these functions are not yet
- * reachable through the UI — but they are the contract the mock API and the
- * query hooks both depend on, so they are tested here.
+ * Exercises the feature API layer directly, independently of the screens.
+ * These functions are the contract the mock API and the query hooks both
+ * depend on, so they are tested at the transport boundary as well as through
+ * the integration tests.
  */
 describe('feature api layer', () => {
   beforeEach(async () => {

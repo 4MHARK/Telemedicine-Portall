@@ -6,7 +6,7 @@
 
 | State | Owner | Persistence | Notes |
 |---|---|---|---|
-| Auth session (`AuthSession`) | Context + Reducer | `localStorage` | hydrated on boot via `/auth/me`; cleared by global 401 handler |
+| Auth session (`AuthSession`) | Context + Reducer | `localStorage` | hydrated from storage on boot (decisions row 41); cleared by global 401 handler |
 | Specialties | TanStack Query | memory cache | `staleTime: Infinity` — never changes in a session |
 | Provider list | TanStack Query | memory cache | keyed by `ProviderFilters` |
 | Provider detail | TanStack Query | memory cache | `staleTime: 5 min` |
@@ -22,7 +22,7 @@
 | Chat composer text | local `useState` | — | ephemeral |
 | Open dialog / sheet | local `useState` | — | ephemeral |
 | Toast queue | `sonner` internal | — | ephemeral |
-| Theme (light/dark) | Context + Reducer | `localStorage` | if dark mode enabled |
+| Theme (light/dark) | Context + Reducer | `localStorage` | enabled (decisions row 14); OS preference is the fallback |
 
 ## Query Keys
 
@@ -75,12 +75,13 @@ export const queryKeys = {
 
 ## Reducer Boundaries
 
-Three reducers, each in its own Context so consumers re-render only when their slice changes:
+Four reducers, each in its own Context so consumers re-render only when their slice changes:
 
 | Reducer | State shape | Actions |
 |---|---|---|
 | `authReducer` | `{ session: AuthSession \| null, status: 'idle' \| 'loading' \| 'authenticated' \| 'unauthenticated' }` | `HYDRATE`, `LOGIN`, `LOGOUT`, `EXPIRE` |
 | `uploadReducer` | `{ tasks: UploadTask[] }` | `ENQUEUE`, `START`, `PROGRESS`, `SUCCESS`, `FAIL`, `RETRY`, `REMOVE`, `CLEAR_COMPLETED` |
 | `wizardReducer` | `{ step: number, draft: WizardDraft, status: 'idle' \| 'submitting' \| 'error' }` | `NEXT`, `BACK`, `GOTO`, `UPDATE_DRAFT`, `RESET`, `SUBMIT_START`, `SUBMIT_SUCCESS`, `SUBMIT_ERROR` |
+| `themeReducer` | `{ theme: 'light' \| 'dark' }` | `HYDRATE`, `SET`, `TOGGLE` |
 
 Each reducer gets its own `<XProvider>` and `<useX>` hook that throws if used outside the provider. Reducers are pure functions tested in isolation.

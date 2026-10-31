@@ -16,6 +16,14 @@ function fileInput(): HTMLInputElement {
   return screen.getByLabelText('Choose files to upload') as HTMLInputElement
 }
 
+describe('upload picker', () => {
+  it('keeps the hidden input out of the tab order', async () => {
+    await openDocuments()
+    // The visible "Choose files" button is the keyboard affordance.
+    expect(fileInput().tabIndex).toBe(-1)
+  })
+})
+
 /**
  * The mock DB is module state shared by the whole file, so an upload in one
  * test persists into the next. Every assertion here is relative to the count
