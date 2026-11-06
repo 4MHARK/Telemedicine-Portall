@@ -56,7 +56,7 @@ export default function LoginPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
         <p className="text-text-muted text-sm">
-          Mock authentication — any non-empty credentials work.
+          Demo build — use one of the seeded patient accounts below.
         </p>
       </div>
 
@@ -104,6 +104,16 @@ export default function LoginPage() {
           You will be returned to the page you were trying to reach.
         </FieldDescription>
       </form>
+
+      <div className="border-border bg-surface-muted/40 text-text-muted rounded-md border px-3 py-2 text-xs">
+        <p className="text-text font-medium">Demo accounts</p>
+        <p className="mt-1 font-mono">nadia.okafor@example.com</p>
+        <p className="font-mono">tomas.silva@example.com</p>
+        <p className="font-mono">mei.chen@example.com</p>
+        <p className="mt-1">
+          Password: <span className="text-text font-mono">demo-password-2026</span>
+        </p>
+      </div>
     </div>
   )
 }

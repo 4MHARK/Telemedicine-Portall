@@ -1,0 +1,198 @@
+// Domain schema for the patient portal.
+//
+// The wire contract is src/types/*.ts in the frontend. This schema stores the
+// same entities; enum values are uppercase in Postgres and lowercased by
+// src/lib/serialize.ts on the way out.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConsultationType {
+  VIDEO
+  PHONE
+  ASYNC
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+  BLOCKED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum DocumentStatus {
+  QUEUED
+  UPLOADING
+  UPLOADED
+  FAILED
+}
+
+enum SenderRole {
+  PATIENT
+  PROVIDER
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model Patient {
+  id                String   @id
+  email             String   @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  phone             String
+  dateOfBirth       DateTime
+  avatarUrl         String?
+  insuranceProvider String?
+  insuranceMemberId String?
+  createdAt         DateTime @default(now())
+
+  appointments  Appointment[]
+  documents     Document[]
+  conversations Conversation[]
+}
+
+model Specialty {
+  id        String              @id
+  name      String
+  slug      String              @unique
+  icon      String
+  providers ProviderSpecialty[]
+}
+
+model Provider {
+  id                String             @id
+  firstName         String
+  lastName          String
+  title             String
+  bio               String
+  avatarUrl         String
+  yearsExperience   Int
+  rating            Float
+  reviewCount       Int
+  languages         String[]
+  consultationTypes ConsultationType[]
+
+  specialties   ProviderSpecialty[]
+  slots         AvailabilitySlot[]
+  appointments  Appointment[]
+  conversations Conversation[]
+}
+
+model ProviderSpecialty {
+  providerId  String
+  specialtyId String
+
+  provider  Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  specialty Specialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([providerId, specialtyId])
+  @@index([specialtyId])
+}
+
+model AvailabilitySlot {
+  id         String     @id
+  providerId String
+  start      DateTime
+  end        DateTime
+  status     SlotStatus @default(AVAILABLE)
+
+  provider     Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([providerId, start])
+}
+
+model Appointment {
+  id               String            @id @default(cuid())
+  patientId        String
+  providerId       String
+  slotId           String
+  consultationType ConsultationType
+  status           AppointmentStatus @default(SCHEDULED)
+  reason           String
+  notes            String?
+  scheduledAt      DateTime
+  durationMinutes  Int
+  createdAt        DateTime          @default(now())
+  cancelledAt      DateTime?
+  cancelReason     String?
+
+  patient   Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  provider  Provider         @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  slot      AvailabilitySlot @relation(fields: [slotId], references: [id])
+  documents Document[]
+
+  @@index([patientId, scheduledAt])
+  @@index([providerId, scheduledAt])
+  @@index([slotId])
+}
+
+model Document {
+  id            String         @id @default(cuid())
+  patientId     String
+  appointmentId String?
+  fileName      String
+  mimeType      String
+  sizeBytes     Int
+  status        DocumentStatus @default(UPLOADED)
+  uploadedAt    DateTime?
+  failureReason String?
+  // File bytes live in Postgres so uploads survive a Render restart.
+  data          Bytes?
+  createdAt     DateTime       @default(now())
+
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([patientId, uploadedAt])
+  @@index([appointmentId])
+}
+
+model Conversation {
+  id                 String   @id
+  patientId          String
+  providerId         String
+  lastMessageAt      DateTime
+  lastMessagePreview String
+  unreadCount        Int      @default(0)
+
+  patient  Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  provider Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@unique([patientId, providerId])
+  @@index([patientId, lastMessageAt])
+}
+
+model ChatMessage {
+  id             String        @id @default(cuid())
+  conversationId String
+  senderId       String
+  senderRole     SenderRole
+  body           String
+  sentAt         DateTime      @default(now())
+  status         MessageStatus @default(SENT)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, sentAt])
+}
