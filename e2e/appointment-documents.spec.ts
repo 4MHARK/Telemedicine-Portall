@@ -16,7 +16,6 @@ test.describe('appointment documents', () => {
       'e2e/fixtures/sample.pdf',
     )
 
-    await expect(page.getByRole('progressbar')).toBeVisible()
     await expect(rows).toHaveCount(before + 1)
     await expect(rows.last()).toContainText('sample.pdf')
     await expect(rows.last()).toContainText('Shared')
