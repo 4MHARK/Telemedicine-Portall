@@ -16,9 +16,6 @@ test.describe('appointment documents', () => {
       'e2e/fixtures/sample.pdf',
     )
 
-    // The progress bar is transient: this upload can finish before Playwright
-    // observes it. upload.spec.ts owns the progress assertion; this flow owns
-    // the appointment association.
     await expect(rows).toHaveCount(before + 1)
     await expect(rows.last()).toContainText('sample.pdf')
     await expect(rows.last()).toContainText('Shared')
