@@ -19,6 +19,16 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(import.meta.dirname, './src'),
       },
     },
+    server: {
+      // Used only when VITE_DISABLE_MOCKS=true. With MSW on, the service
+      // worker intercepts /api before the request reaches this proxy.
+      proxy: {
+        '/api': {
+          target: env.VITE_API_PROXY_TARGET ?? 'http://localhost:3001',
+          changeOrigin: true,
+        },
+      },
+    },
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],

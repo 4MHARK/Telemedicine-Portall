@@ -63,6 +63,15 @@ Every decision here is frozen for the duration of the project. Reopening one req
 | 49 | Route error reset | the route boundary resets when `location.key` changes | without it, shell navigation cannot leave a page that crashed | never |
 | 50 | `?next` hardening | reject `//` and `\` prefixes | protocol-relative and backslash forms normalize to an open redirect | never |
 | 51 | Document sharing | uploads carry an optional `appointmentId`; the appointment detail page and the Documents tab expose it | makes “share with your provider” real; the contract, `Document` type and XHR transport already supported it | a real file-sharing or PHI system ships |
+| 52 | Backend | patient-only Express 5 + Prisma + PostgreSQL in `server/`; the frontend switches with `VITE_DISABLE_MOCKS=true` and a same-origin `/api` rewrite | the mock contract was the spec; the service matches it without changing components, and two frontend builds keep a mock-only fallback | a doctor/admin portal or real payments ship |
+| 53 | Backend auth | three seeded patient accounts with bcrypt passwords; no signup and no password-bypass mode | a bypass that ignores the password is indefensible in review; a doctor role is UI scope, not backend scope | the portal adds doctor or admin users |
+| 54 | Document bytes | uploads are stored in PostgreSQL `bytea`, 10 MB cap | Render free tier has no persistent disk; metadata-only uploads would look successful and be lost on the next restart | object storage is introduced |
+| 55 | Chat replies | the server persists one provider reply about 1.5 s after a patient message | there is no doctor session; the mock's reply is part of the demonstrated flow and should survive a refresh | real provider users or real-time transport |
+
+Backend delivery note: `server/` implements the same contract as the mock. The
+mock build remains the default and the live fallback; the backend-wired build
+sets `VITE_DISABLE_MOCKS=true` (rows 52–55).
+
 Note: Overall statement coverage is ~83.0% (118 tests). Per-directory thresholds all pass (100% on reducers/schemas/hooks, 95%+ on API). The `fail-*` upload retry is covered browser-only in Playwright due to a jsdom File cross-realm limitation.
 
 Deployment note: the Netlify/Vercel configuration and the CI `dist/` artifact are in place. Publishing the live URL still requires connecting the repository to the hosting account; no credential is stored in the repo.
@@ -95,6 +104,8 @@ All resolved before final defense:
 - [x] Decide dark mode — enabled (row 14).
 - [x] Provider pagination controls — delivered (row 48).
 - [x] Production mock API + deployment config — delivered (rows 45–46).
+- [x] Backend delivery — patient-only Express/Prisma API in `server/`, with a
+  mock-only fallback build (rows 52–55).
 - [x] WCAG audit — manual axe-core 4.10.2 run (WCAG 2.2 A/AA): 0 violations on
   login, doctors, provider detail, appointments, documents, messages, chat,
   profile and scheduling; desktop and mobile, light and dark.

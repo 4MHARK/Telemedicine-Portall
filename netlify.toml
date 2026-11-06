@@ -5,6 +5,15 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# API proxy: the browser calls same-origin /api, Netlify forwards to Render.
+# Replace REPLACE_WITH_RENDER_URL after the backend's first deploy.
+# Keep this rule before the SPA fallback; Netlify uses the first match.
+[[redirects]]
+  from = "/api/*"
+  to = "https://REPLACE_WITH_RENDER_URL/api/:splat"
+  status = 200
+  force = true
+
 # SPA fallback: deep links such as /documents are handled by React Router.
 [[redirects]]
   from = "/*"
