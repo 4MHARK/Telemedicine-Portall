@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { AppError, asyncHandler, badRequest, forbidden, notFound, routeParam } from '../lib/http.js'
 import { prisma } from '../lib/prisma.js'
 import { serializeDocument } from '../lib/serialize.js'
-import { currentPatient, requireAuth } from '../middleware/auth.js'
+import { currentPatient, requirePatient } from '../middleware/auth.js'
 import { parseBody } from '../middleware/validate.js'
 
 const uploadFieldsSchema = z.object({
@@ -31,7 +31,7 @@ function sortDocuments<T extends { uploadedAt: Date | null; id: string }>(rows: 
 
 export const documentsRouter = Router()
 
-documentsRouter.use(requireAuth)
+documentsRouter.use(requirePatient)
 
 documentsRouter.get(
   '/',

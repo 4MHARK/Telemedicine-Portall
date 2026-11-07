@@ -8,6 +8,12 @@ export default defineConfig(({ mode }) => {
   // Loaded from .env files as well as the shell, so VITE_BASE_PATH works as
   // documented in .env.example. "/" is the default for root deployments.
   const env = loadEnv(mode, process.cwd(), 'VITE_')
+  const apiProxy = {
+    '/api': {
+      target: env.VITE_API_PROXY_TARGET ?? 'http://localhost:3001',
+      changeOrigin: true,
+    },
+  }
 
   return {
     // The router reads import.meta.env.BASE_URL so deep links stay inside the
@@ -20,14 +26,13 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      // Used only when VITE_DISABLE_MOCKS=true. With MSW on, the service
-      // worker intercepts /api before the request reaches this proxy.
-      proxy: {
-        '/api': {
-          target: env.VITE_API_PROXY_TARGET ?? 'http://localhost:3001',
-          changeOrigin: true,
-        },
-      },
+      // The live API is the default. With VITE_ENABLE_MOCKS=true, the dev
+      // service worker intercepts /api before the request reaches this proxy.
+      proxy: apiProxy,
+    },
+    preview: {
+      // vite preview does not inherit server.proxy.
+      proxy: apiProxy,
     },
     test: {
       environment: 'jsdom',

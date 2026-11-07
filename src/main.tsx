@@ -7,21 +7,16 @@ import '@fontsource/inter/500.css'
 import '@fontsource/inter/600.css'
 
 import { AppProviders } from '@/app/providers'
-import { router } from '@/app/router'
 
 import './index.css'
 
 /**
- * Starts the MSW service worker before the first render so no request can
- * escape to the network on boot. docs/decisions.md scopes the project to
- * mock-only data, which is true in the deployed demo as well as in dev — a
- * production build with the worker off has no backend to talk to. Set
- * VITE_DISABLE_MOCKS=true only when pointing the app at a real API.
- *
- * The worker module is imported lazily so it stays out of the main chunk.
+ * The live app talks to the real Express API by default. MSW is opt-in in
+ * development for isolated UI work and is always used by the Vitest node
+ * server. `import.meta.env.DEV` keeps the worker out of production bundles.
  */
 async function enableMocking(): Promise<void> {
-  if (import.meta.env.VITE_DISABLE_MOCKS === 'true') return
+  if (!import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCKS !== 'true') return
 
   try {
     const { worker } = await import('@/mocks/browser')
@@ -42,7 +37,11 @@ async function enableMocking(): Promise<void> {
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error('Root element #root not found')
 
-void enableMocking().then(() => {
+void enableMocking().then(async () => {
+  // Import the router only after the mock worker is ready. Creating it earlier
+  // lets the first guarded loader fire before MSW can intercept /auth/me.
+  const { router } = await import('@/app/router')
+
   createRoot(rootElement).render(
     <StrictMode>
       <AppProviders>

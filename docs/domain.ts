@@ -53,6 +53,12 @@ export interface Specialty {
 
 export type ConsultationType = 'video' | 'phone' | 'async';
 
+export interface ConsultationFee {
+  consultationType: ConsultationType;
+  amountMinor: number;                 // NGN kobo; always an integer
+  currency: string;
+}
+
 export interface Provider {
   id: UUID;
   firstName: string;
@@ -66,7 +72,13 @@ export interface Provider {
   reviewCount: number;
   languages: string[];                 // ["English", "Spanish"]
   consultationTypes: ConsultationType[];
+  fees: ConsultationFee[];
   nextAvailableAt: ISODateString | null; // null = no availability in the next N days
+}
+
+export interface ProviderProfile extends Provider {
+  email: string;                       // account-owned, not public
+  isActive: boolean;
 }
 
 // ── Availability ─────────────────────────────────────────────
@@ -84,16 +96,18 @@ export interface AvailabilitySlot {
 // ── Appointment ──────────────────────────────────────────────
 //
 // Lifecycle:
-//     scheduled ──► completed
-//          │
-//          ├──► cancelled   (cancelledAt, cancelReason set)
-//          └──► no_show
+//     pending_payment ──► scheduled ──► completed
+//          │                  │
+//          ├──► expired        ├──► cancelled
+//          └──► cancelled      └──► no_show
 //
 export type AppointmentStatus =
+  | 'pending_payment'
   | 'scheduled'
   | 'completed'
   | 'cancelled'
-  | 'no_show';
+  | 'no_show'
+  | 'expired';
 
 export interface Appointment {
   id: UUID;
@@ -106,9 +120,17 @@ export interface Appointment {
   notes?: string;                      // provider notes, post-visit
   scheduledAt: ISODateString;          // denormalized from slot.start
   durationMinutes: number;
+  amountMinor: number;                 // server-computed from the provider fee
+  currency: string;
+  holdExpiresAt: ISODateString | null; // 10-minute payment hold
+  confirmedAt?: ISODateString;
   createdAt: ISODateString;
   cancelledAt?: ISODateString;
   cancelReason?: string;
+}
+
+export interface ProviderAppointment extends Appointment {
+  patientName: string;                 // doctor-facing rows
 }
 
 // ── Documents ────────────────────────────────────────────────
@@ -162,9 +184,11 @@ export interface Conversation {
   id: UUID;
   patientId: UUID;
   providerId: UUID;
+  patientName?: string;
+  providerName?: string;
   lastMessageAt: ISODateString;
   lastMessagePreview: string;
-  unreadCount: number;
+  unreadCount: number;                 // viewer-specific
 }
 
 export interface ChatMessage {
@@ -179,17 +203,45 @@ export interface ChatMessage {
 
 // ── Auth ─────────────────────────────────────────────────────
 
-export interface JwtPayload {
-  sub: UUID;                           // patient id
-  role: 'patient';
-  iat: number;                         // issued-at, seconds
-  exp: number;                         // expiry, seconds
+export type AccountRole = 'patient' | 'doctor';
+
+export interface Account {
+  id: UUID;
+  email: string;                       // unique, normalized lowercase
+  role: AccountRole;
+  isActive: boolean;
 }
 
 export interface AuthSession {
-  token: string;                       // mock JWT
-  expiresAt: ISODateString;
-  patient: Patient;
+  account: Account;
+  patient?: Patient;
+  provider?: ProviderProfile;
+}
+
+// ── Payments ─────────────────────────────────────────────────
+
+export type PaymentStatus =
+  | 'pending'
+  | 'succeeded'
+  | 'failed'
+  | 'abandoned'
+  | 'refund_pending'
+  | 'refunded';
+export type RefundStatus = 'not_required' | 'pending' | 'confirmed' | 'failed';
+
+export interface Payment {
+  id: UUID;
+  appointmentId: UUID;
+  reference: string;                   // unique Paystack reference
+  amountMinor: number;
+  currency: string;
+  status: PaymentStatus;
+  refundStatus: RefundStatus;
+  accessCode?: string;                 // checkout only
+  authorizationUrl?: string;
+  paidAt?: ISODateString;
+  verifiedAt?: ISODateString;
+  createdAt: ISODateString;
 }
 
 // ── Query / Filter Types ─────────────────────────────────────

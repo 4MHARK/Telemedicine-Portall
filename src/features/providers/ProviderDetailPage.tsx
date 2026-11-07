@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ErrorState, LoadingSkeleton, PageHeader } from '@/components/shared'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { ApiError } from '@/lib/apiClient'
-import { formatDateTime, formatRating } from '@/lib/format'
+import { formatDateTime, formatMoney, formatRating } from '@/lib/format'
 import { useProvider, useProviderSlots } from './queries'
 import { useSpecialties } from '@/features/specialties'
 
@@ -125,11 +125,15 @@ export default function ProviderDetailPage() {
           <section className="flex flex-col gap-2" aria-label="Consultation types">
             <h2 className="font-medium">Consultation types</h2>
             <div className="flex flex-wrap gap-2">
-              {data.consultationTypes.map((type) => (
-                <Badge key={type} variant="secondary" className="capitalize">
-                  {type}
-                </Badge>
-              ))}
+              {data.consultationTypes.map((type) => {
+                const fee = data.fees.find((entry) => entry.consultationType === type)
+                return (
+                  <Badge key={type} variant="secondary" className="capitalize">
+                    {type}
+                    {fee ? ` · ${formatMoney(fee.amountMinor, fee.currency)}` : ''}
+                  </Badge>
+                )
+              })}
             </div>
           </section>
         </div>

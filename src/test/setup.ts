@@ -2,7 +2,9 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup, configure } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 
+import { queryClient } from '@/lib/queryClient'
 import { server } from '@/mocks/server'
+import { mockSignOut } from '@/mocks/session'
 
 // Every mock response carries 200-600ms of simulated latency
 // (docs/api-contract.md), and some pages issue two requests before they can
@@ -40,6 +42,8 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 
 afterEach(() => {
   server.resetHandlers()
+  mockSignOut()
+  queryClient.clear()
   cleanup()
 })
 

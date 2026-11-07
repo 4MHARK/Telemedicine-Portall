@@ -1,9 +1,9 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * Runs against the real dev server, so the MSW service worker is in play —
- * these tests exercise the browser path, including the `fail-*` upload rule
- * that jsdom cannot reach.
+ * Runs against the dev server with MSW explicitly enabled. The live app uses
+ * the real API by default, so the browser suite opts into mocks to keep these
+ * flows deterministic, including the `fail-*` upload rule jsdom cannot reach.
  *
  * Local runs use the installed Google Chrome; CI installs the bundled Chromium
  * (`npx playwright install chromium`), so the channel is dropped there.
@@ -33,5 +33,6 @@ export default defineConfig({
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: { VITE_ENABLE_MOCKS: 'true' },
   },
 })

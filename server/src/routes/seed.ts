@@ -17,6 +17,10 @@ export const seedRouter = Router()
 seedRouter.post(
   '/',
   asyncHandler(async (req, res) => {
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED !== 'true') {
+      throw new AppError(404, 'NOT_FOUND', 'Route not found.')
+    }
+
     const expected = process.env.SEED_SECRET
     if (!expected) {
       throw new AppError(500, 'INTERNAL', 'SEED_SECRET is not configured.')

@@ -6,13 +6,15 @@
 
 | State | Owner | Persistence | Notes |
 |---|---|---|---|
-| Auth session (`AuthSession`) | Context + Reducer | `localStorage` | hydrated from storage on boot (decisions row 41); cleared by global 401 handler |
+| Auth session (`AuthSession`) | Context + Reducer, backed by the `auth.me` query | server HTTP-only cookie | hydrated from `GET /auth/me` on boot; cleared by the global 401 handler and logout |
 | Specialties | TanStack Query | memory cache | `staleTime: Infinity` — never changes in a session |
 | Provider list | TanStack Query | memory cache | keyed by `ProviderFilters` |
 | Provider detail | TanStack Query | memory cache | `staleTime: 5 min` |
 | Slots for provider | TanStack Query | memory cache | keyed by `(providerId, from, to)` |
 | Appointment list | TanStack Query | memory cache | invalidated on create / cancel |
-| Appointment detail | TanStack Query | memory cache | invalidated on cancel |
+| Appointment detail | TanStack Query | memory cache | invalidated on cancel/payment |
+| Payment attempt | TanStack Query | memory cache | `payments/:reference`; settlement invalidates appointments and provider portal |
+| Provider portal profile/fees/slots/appointments | TanStack Query | memory cache | doctor-only keys under `provider-portal` |
 | Documents list | TanStack Query | memory cache | invalidated on upload success / delete |
 | **Upload queue** (`UploadTask[]`) | **Context + Reducer** | memory only | holds `File` refs and the optional visit (`appointmentId`); Query can't model transfer progress |
 | Conversations list | TanStack Query | memory cache | `refetchInterval: 10_000`, background off |
@@ -52,6 +54,14 @@ export const queryKeys = {
       ['appointments', 'list', { status }] as const,
     detail: (id: string) => ['appointments', 'detail', id] as const,
   },
+  providerPortal: {
+    me: ['provider-portal', 'me'] as const,
+    fees: ['provider-portal', 'fees'] as const,
+    slots: (from: string, to: string) =>
+      ['provider-portal', 'slots', { from, to }] as const,
+    appointments: (status?: AppointmentStatus) =>
+      ['provider-portal', 'appointments', { status }] as const,
+  },
   documents: {
     list: ['documents', 'list'] as const,
   },
@@ -69,6 +79,8 @@ export const queryKeys = {
 |---|---|
 | Create appointment | `appointments.list`, `providers.slots(providerId, ...)` |
 | Cancel appointment | `appointments.list`, `appointments.detail(id)`, `providers.slots(...)` |
+| Initialize/verify payment | `appointments.detail(id)`, `appointments.list`, `provider-portal.*` |
+| Doctor changes fees/availability | `provider-portal.*`, `providers.detail(id)` |
 | Upload document | `documents.list` |
 | Delete document | `documents.list` |
 | Send chat message | does **not** invalidate — optimistic append, poll confirms |

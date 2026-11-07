@@ -1,9 +1,8 @@
 // Latency, auth guard, and the ApiErrorBody shape.
 import { delay, HttpResponse } from 'msw'
 
-import type { ApiErrorBody, UUID } from '@/types'
-import { decodeToken, isTokenValid } from '@/lib/jwt'
-import { patients } from '../db'
+import type { ApiErrorBody, AuthSession, UUID } from '@/types'
+import { mockSessionForRequest } from '../session'
 
 // 200-600ms. Kept on in tests too, otherwise loading states are never visible.
 export function latency(): Promise<void> {
@@ -21,27 +20,34 @@ export function apiError(
   return HttpResponse.json(body, { status })
 }
 
-export type AuthResult = { ok: true; patientId: UUID } | { ok: false; response: Response }
+export type AuthResult = { ok: true; session: AuthSession } | { ok: false; response: Response }
 
-// Bearer token check. Returns a result so handlers can early-return.
+/**
+ * The browser mock keeps a module-level session instead of an HttpOnly cookie:
+ * jsdom cannot set cookies from a service worker. Tests call mockSignIn() to
+ * establish the same role the real cookie would carry.
+ */
 export function authenticate(request: Request): AuthResult {
-  const header = request.headers.get('Authorization')
-  const token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : null
-
-  const payload = token ? decodeToken(token) : null
-  if (!payload || !isTokenValid(payload)) {
+  const session = mockSessionForRequest(request)
+  if (!session) {
     return {
       ok: false,
-      response: apiError(401, 'UNAUTHORIZED', 'Missing, invalid or expired token.'),
+      response: apiError(401, 'UNAUTHORIZED', 'Missing, invalid or expired session.'),
     }
   }
+  return { ok: true, session }
+}
 
-  const patient = patients.find((p) => p.id === payload.sub)
-  if (!patient) {
-    return { ok: false, response: apiError(401, 'UNAUTHORIZED', 'Token subject is unknown.') }
-  }
+export function patientIdOf(session: AuthSession): UUID {
+  const patientId = session.patient?.id
+  if (!patientId) throw new Error('The mock session is not a patient session.')
+  return patientId
+}
 
-  return { ok: true, patientId: patient.id }
+export function providerIdOf(session: AuthSession): UUID {
+  const providerId = session.provider?.id
+  if (!providerId) throw new Error('The mock session is not a doctor session.')
+  return providerId
 }
 
 export type JsonResult<T> = { ok: true; data: T } | { ok: false; response: Response }

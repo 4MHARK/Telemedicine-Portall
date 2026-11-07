@@ -4,6 +4,8 @@ import { appointmentsRouter } from './appointments.js'
 import { authRouter } from './auth.js'
 import { conversationsRouter } from './conversations.js'
 import { documentsRouter } from './documents.js'
+import { paymentsRouter } from './payments.js'
+import { providerRouter } from './provider.js'
 import { providersRouter } from './providers.js'
 import { seedRouter } from './seed.js'
 import { specialtiesRouter } from './specialties.js'
@@ -19,6 +21,8 @@ apiRouter.use('/auth', authRouter)
 apiRouter.use('/specialties', specialtiesRouter)
 apiRouter.use('/providers', providersRouter)
 apiRouter.use('/appointments', appointmentsRouter)
+apiRouter.use('/provider', providerRouter)
+apiRouter.use('/payments', paymentsRouter)
 apiRouter.use('/documents', documentsRouter)
 apiRouter.use('/conversations', conversationsRouter)
 apiRouter.use('/seed', seedRouter)

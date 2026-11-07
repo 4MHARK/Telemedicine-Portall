@@ -28,7 +28,7 @@ export class AppError extends Error {
 export const badRequest = (message: string, fieldErrors?: Record<string, string[]>) =>
   new AppError(422, 'VALIDATION', message, fieldErrors)
 
-export const unauthorized = (message = 'Missing, invalid or expired token.') =>
+export const unauthorized = (message = 'Missing, invalid or expired session.') =>
   new AppError(401, 'UNAUTHORIZED', message)
 
 export const forbidden = (message = 'You do not have access to this resource.') =>

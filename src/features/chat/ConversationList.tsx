@@ -2,6 +2,7 @@ import { MessageSquare } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { AsyncStatus, EmptyState, LoadingSkeleton } from '@/components/shared'
+import { useAuth } from '@/features/auth'
 import { useProviders } from '@/features/providers'
 import { cn } from '@/lib/utils'
 import type { Provider } from '@/types'
@@ -13,6 +14,9 @@ function providerName(provider: Provider | undefined): string {
 }
 
 export function ConversationList({ activeId }: { activeId?: string }) {
+  const { session } = useAuth()
+  const isDoctor = session?.account.role === 'doctor'
+  const basePath = isDoctor ? '/provider/messages' : '/messages'
   const conversations = useConversations()
   const directory = useProviders({ pageSize: 50 })
   const providers = new Map((directory.data?.items ?? []).map((p) => [p.id, p]))
@@ -37,18 +41,21 @@ export function ConversationList({ activeId }: { activeId?: string }) {
           {data.map((conversation) => {
             const provider = providers.get(conversation.providerId)
             const active = conversation.id === activeId
+            const displayName = isDoctor
+              ? (conversation.patientName ?? 'Patient')
+              : providerName(provider)
 
             return (
               <li key={conversation.id}>
                 <Link
-                  to={`/messages/${conversation.id}`}
+                  to={`${basePath}/${conversation.id}`}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'flex items-start gap-3 rounded-md p-3 transition-colors',
                     active ? 'bg-surface-muted' : 'hover:bg-surface-muted',
                   )}
                 >
-                  {provider ? (
+                  {!isDoctor && provider ? (
                     <img
                       src={provider.avatarUrl}
                       alt=""
@@ -57,11 +64,13 @@ export function ConversationList({ activeId }: { activeId?: string }) {
                       height={36}
                     />
                   ) : (
-                    <span className="bg-surface-muted size-9 rounded-full" aria-hidden="true" />
+                    <span className="bg-surface-muted grid size-9 place-items-center rounded-full text-xs font-medium">
+                      {displayName.slice(0, 1)}
+                    </span>
                   )}
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-medium">{providerName(provider)}</span>
+                      <span className="truncate text-sm font-medium">{displayName}</span>
                       <span className="text-text-subtle shrink-0 text-xs">
                         {formatDateTime(conversation.lastMessageAt)}
                       </span>

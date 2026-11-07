@@ -1,10 +1,14 @@
 import { Link } from 'react-router'
 
+import { useAuth } from '@/features/auth'
 import { cn } from '@/lib/utils'
-import { isNavItemActive, NAV_ITEMS } from './nav-items'
+import { isNavItemActive, navItemsForRole } from './nav-items'
 
 /** docs/routes.md: bottom tab bar below `md`, five items. */
 export function BottomNav({ currentPath }: { currentPath: string }) {
+  const { session } = useAuth()
+  const items = navItemsForRole(session?.account.role)
+
   return (
     <nav
       aria-label="Main"
@@ -12,7 +16,7 @@ export function BottomNav({ currentPath }: { currentPath: string }) {
       data-slot="bottom-nav"
     >
       <ul className="flex">
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+        {items.map(({ to, label, icon: Icon }) => {
           const active = isNavItemActive(currentPath, to)
           return (
             <li key={to} className="flex-1">

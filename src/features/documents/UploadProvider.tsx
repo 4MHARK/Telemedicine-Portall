@@ -4,7 +4,6 @@ import type { ReactNode } from 'react'
 
 import { API_BASE_URL, ApiError } from '@/lib/apiClient'
 import { queryKeys } from '@/lib/queryKeys'
-import { readToken } from '@/lib/session'
 import type { UploadTask } from '@/types'
 import { initialUploadState, uploadReducer } from './reducer'
 import { UploadContext } from './upload-context'
@@ -49,7 +48,6 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         const document = await uploadWithXhr({
           url: `${API_BASE_URL}/documents`,
           file: task.file,
-          token: readToken(),
           appointmentId: task.appointmentId,
           onProgress: (percent) => dispatch({ type: 'PROGRESS', id: task.id, progress: percent }),
         })

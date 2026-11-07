@@ -1,5 +1,5 @@
 import { prisma } from '../src/lib/prisma.js'
-import { DEMO_PASSWORD, seedDatabase } from '../src/lib/seed.js'
+import { DEMO_PASSWORD, DEMO_PROVIDER_PASSWORD, seedDatabase } from '../src/lib/seed.js'
 
 seedDatabase()
   .then((summary) => {
@@ -13,6 +13,7 @@ seedDatabase()
     console.log(`  conversations ${summary.conversations}`)
     console.log(`  messages     ${summary.messages}`)
     console.log(`  demo password ${DEMO_PASSWORD}`)
+    console.log(`  doctor password ${DEMO_PROVIDER_PASSWORD}`)
   })
   .catch((error: unknown) => {
     console.error('Seed failed.', error)

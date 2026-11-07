@@ -17,6 +17,12 @@ export interface Specialty {
 
 export type ConsultationType = 'video' | 'phone' | 'async'
 
+export interface ConsultationFee {
+  consultationType: ConsultationType
+  amountMinor: number
+  currency: string
+}
+
 export interface Provider {
   id: UUID
   firstName: string
@@ -30,7 +36,14 @@ export interface Provider {
   reviewCount: number
   languages: string[] // ["English", "Spanish"]
   consultationTypes: ConsultationType[]
+  fees: ConsultationFee[]
   nextAvailableAt: ISODateString | null // null = no availability in the next N days
+}
+
+/** The signed-in doctor's own profile adds account-owned fields. */
+export interface ProviderProfile extends Provider {
+  email: string
+  isActive: boolean
 }
 
 // ── Availability ─────────────────────────────────────────────

@@ -39,7 +39,9 @@ describe('appointments', () => {
 
     expect((await screen.findAllByText('Cancelled')).length).toBeGreaterThan(0)
     expect(
-      await screen.findByText('Only scheduled appointments can be cancelled.'),
+      await screen.findByText(
+        'Only an appointment awaiting payment or still scheduled can be cancelled.',
+      ),
     ).toBeInTheDocument()
   })
 })

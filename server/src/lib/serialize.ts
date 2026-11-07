@@ -3,14 +3,15 @@
 
 export type ConsultationTypeWire = 'video' | 'phone' | 'async'
 export type SlotStatusWire = 'available' | 'booked' | 'blocked'
-export type AppointmentStatusWire = 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+export type AppointmentStatusWire =
+  'pending_payment' | 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'expired'
 export type DocumentStatusWire = 'queued' | 'uploading' | 'uploaded' | 'failed'
 export type MessageStatusWire = 'sending' | 'sent' | 'delivered' | 'read' | 'failed'
 export type SenderRoleWire = 'patient' | 'provider'
+export type AccountRoleWire = 'patient' | 'doctor'
 
 interface PatientRow {
   id: string
-  email: string
   firstName: string
   lastName: string
   phone: string
@@ -32,12 +33,12 @@ export interface PatientResponse {
   insuranceMemberId?: string
 }
 
-export function serializePatient(patient: PatientRow): PatientResponse {
+export function serializePatient(patient: PatientRow, email: string): PatientResponse {
   return {
     id: patient.id,
     firstName: patient.firstName,
     lastName: patient.lastName,
-    email: patient.email,
+    email,
     phone: patient.phone,
     dateOfBirth: patient.dateOfBirth.toISOString(),
     ...(patient.avatarUrl ? { avatarUrl: patient.avatarUrl } : {}),
@@ -69,6 +70,12 @@ export function serializeSpecialty(specialty: SpecialtyRow): SpecialtyResponse {
   }
 }
 
+interface ConsultationFeeRow {
+  consultationType: string
+  amountMinor: number
+  currency: string
+}
+
 interface ProviderRow {
   id: string
   firstName: string
@@ -81,6 +88,13 @@ interface ProviderRow {
   reviewCount: number
   languages: readonly string[]
   consultationTypes: readonly string[]
+  fees?: readonly ConsultationFeeRow[]
+}
+
+export interface ConsultationFeeResponse {
+  consultationType: ConsultationTypeWire
+  amountMinor: number
+  currency: string
 }
 
 export interface ProviderResponse {
@@ -96,7 +110,13 @@ export interface ProviderResponse {
   reviewCount: number
   languages: string[]
   consultationTypes: ConsultationTypeWire[]
+  fees: ConsultationFeeResponse[]
   nextAvailableAt: string | null
+}
+
+export interface ProviderProfileResponse extends ProviderResponse {
+  email: string
+  isActive: boolean
 }
 
 export function serializeProvider(
@@ -119,8 +139,77 @@ export function serializeProvider(
     consultationTypes: provider.consultationTypes.map(
       (type) => type.toLowerCase() as ConsultationTypeWire,
     ),
+    fees: (provider.fees ?? []).map((fee) => ({
+      consultationType: fee.consultationType.toLowerCase() as ConsultationTypeWire,
+      amountMinor: fee.amountMinor,
+      currency: fee.currency,
+    })),
     nextAvailableAt: nextAvailableAt ? nextAvailableAt.toISOString() : null,
   }
+}
+
+export function serializeProviderProfile(
+  provider: ProviderRow & {
+    isActive: boolean
+    specialties: readonly { specialtyId: string }[]
+  },
+  email: string,
+): ProviderProfileResponse {
+  return {
+    ...serializeProvider(
+      provider,
+      provider.specialties.map((entry) => entry.specialtyId).sort(),
+      null,
+    ),
+    email,
+    isActive: provider.isActive,
+  }
+}
+
+interface AccountRow {
+  id: string
+  email: string
+  role: string
+  isActive: boolean
+  patient?: PatientRow | null
+  provider?:
+    | (ProviderRow & {
+        isActive: boolean
+        specialties: readonly { specialtyId: string }[]
+      })
+    | null
+}
+
+export interface AccountResponse {
+  id: string
+  email: string
+  role: AccountRoleWire
+  isActive: boolean
+}
+
+export interface AuthResponse {
+  account: AccountResponse
+  patient?: PatientResponse
+  provider?: ProviderProfileResponse
+}
+
+export function serializeAuth(account: AccountRow): AuthResponse {
+  const base: AuthResponse = {
+    account: {
+      id: account.id,
+      email: account.email,
+      role: account.role.toLowerCase() as AccountRoleWire,
+      isActive: account.isActive,
+    },
+  }
+
+  if (account.patient) {
+    return { ...base, patient: serializePatient(account.patient, account.email) }
+  }
+  if (account.provider) {
+    return { ...base, provider: serializeProviderProfile(account.provider, account.email) }
+  }
+  return base
 }
 
 interface SlotRow {
@@ -160,6 +249,10 @@ interface AppointmentRow {
   notes: string | null
   scheduledAt: Date
   durationMinutes: number
+  amountMinor: number
+  currency: string
+  holdExpiresAt: Date | null
+  confirmedAt: Date | null
   createdAt: Date
   cancelledAt: Date | null
   cancelReason: string | null
@@ -176,6 +269,10 @@ export interface AppointmentResponse {
   notes?: string
   scheduledAt: string
   durationMinutes: number
+  amountMinor: number
+  currency: string
+  holdExpiresAt: string | null
+  confirmedAt?: string
   createdAt: string
   cancelledAt?: string
   cancelReason?: string
@@ -193,6 +290,10 @@ export function serializeAppointment(appointment: AppointmentRow): AppointmentRe
     ...(appointment.notes ? { notes: appointment.notes } : {}),
     scheduledAt: appointment.scheduledAt.toISOString(),
     durationMinutes: appointment.durationMinutes,
+    amountMinor: appointment.amountMinor,
+    currency: appointment.currency,
+    holdExpiresAt: appointment.holdExpiresAt ? appointment.holdExpiresAt.toISOString() : null,
+    ...(appointment.confirmedAt ? { confirmedAt: appointment.confirmedAt.toISOString() } : {}),
     createdAt: appointment.createdAt.toISOString(),
     ...(appointment.cancelledAt ? { cancelledAt: appointment.cancelledAt.toISOString() } : {}),
     ...(appointment.cancelReason ? { cancelReason: appointment.cancelReason } : {}),
@@ -243,26 +344,43 @@ interface ConversationRow {
   providerId: string
   lastMessageAt: Date
   lastMessagePreview: string
-  unreadCount: number
+  patientUnreadCount: number
+  providerUnreadCount: number
+  patient?: { firstName: string; lastName: string }
+  provider?: { title: string; firstName: string; lastName: string }
 }
 
 export interface ConversationResponse {
   id: string
   patientId: string
   providerId: string
+  patientName?: string
+  providerName?: string
   lastMessageAt: string
   lastMessagePreview: string
   unreadCount: number
 }
 
-export function serializeConversation(conversation: ConversationRow): ConversationResponse {
+export function serializeConversation(
+  conversation: ConversationRow,
+  viewer: 'patient' | 'provider',
+): ConversationResponse {
   return {
     id: conversation.id,
     patientId: conversation.patientId,
     providerId: conversation.providerId,
+    ...(conversation.patient
+      ? { patientName: `${conversation.patient.firstName} ${conversation.patient.lastName}` }
+      : {}),
+    ...(conversation.provider
+      ? {
+          providerName: `${conversation.provider.title} ${conversation.provider.firstName} ${conversation.provider.lastName}`,
+        }
+      : {}),
     lastMessageAt: conversation.lastMessageAt.toISOString(),
     lastMessagePreview: conversation.lastMessagePreview,
-    unreadCount: conversation.unreadCount,
+    unreadCount:
+      viewer === 'patient' ? conversation.patientUnreadCount : conversation.providerUnreadCount,
   }
 }
 
@@ -295,5 +413,56 @@ export function serializeChatMessage(message: ChatMessageRow): ChatMessageRespon
     body: message.body,
     sentAt: message.sentAt.toISOString(),
     status: message.status.toLowerCase() as MessageStatusWire,
+  }
+}
+
+export type PaymentStatusWire =
+  'pending' | 'succeeded' | 'failed' | 'abandoned' | 'refund_pending' | 'refunded'
+export type RefundStatusWire = 'not_required' | 'pending' | 'confirmed' | 'failed'
+
+interface PaymentRow {
+  id: string
+  appointmentId: string
+  reference: string
+  amountMinor: number
+  currency: string
+  status: string
+  refundStatus: string
+  accessCode: string | null
+  authorizationUrl: string | null
+  paidAt: Date | null
+  verifiedAt: Date | null
+  createdAt: Date
+}
+
+export interface PaymentResponse {
+  id: string
+  appointmentId: string
+  reference: string
+  amountMinor: number
+  currency: string
+  status: PaymentStatusWire
+  refundStatus: RefundStatusWire
+  accessCode?: string
+  authorizationUrl?: string
+  paidAt?: string
+  verifiedAt?: string
+  createdAt: string
+}
+
+export function serializePayment(payment: PaymentRow): PaymentResponse {
+  return {
+    id: payment.id,
+    appointmentId: payment.appointmentId,
+    reference: payment.reference,
+    amountMinor: payment.amountMinor,
+    currency: payment.currency,
+    status: payment.status.toLowerCase() as PaymentStatusWire,
+    refundStatus: payment.refundStatus.toLowerCase() as RefundStatusWire,
+    ...(payment.accessCode ? { accessCode: payment.accessCode } : {}),
+    ...(payment.authorizationUrl ? { authorizationUrl: payment.authorizationUrl } : {}),
+    ...(payment.paidAt ? { paidAt: payment.paidAt.toISOString() } : {}),
+    ...(payment.verifiedAt ? { verifiedAt: payment.verifiedAt.toISOString() } : {}),
+    createdAt: payment.createdAt.toISOString(),
   }
 }

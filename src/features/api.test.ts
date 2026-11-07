@@ -11,7 +11,7 @@ import { fetchConversations, fetchMessages, sendMessage } from './chat/api'
 import { deleteDocument, fetchDocuments } from './documents/api'
 import { fetchProvider, fetchProviders, fetchProviderSlots } from './providers/api'
 import { fetchSpecialties } from './specialties/api'
-import { clearSession } from '@/lib/session'
+import { mockSignOut } from '@/mocks/session'
 
 /**
  * Exercises the feature API layer directly, independently of the screens.
@@ -21,17 +21,17 @@ import { clearSession } from '@/lib/session'
  */
 describe('feature api layer', () => {
   beforeEach(async () => {
-    clearSession()
+    mockSignOut()
     await login({ email: 'nadia@example.com', password: 'demo' })
   })
 
   it('auth: me, then logout', async () => {
-    const patient = await fetchMe()
-    expect(patient.id).toBe('pat_01')
-    expect(patient.firstName).toBe('Nadia')
+    const session = await fetchMe()
+    expect(session.patient?.id).toBe('pat_01')
+    expect(session.patient?.firstName).toBe('Nadia')
 
     await logout()
-    // logout clears the local session even though the request succeeded
+    // The mock clears its module-level session; the server clears the cookie.
     await expect(fetchMe()).rejects.toThrow()
   })
 
@@ -106,7 +106,7 @@ describe('feature api layer', () => {
     await expect(deleteDocument(target?.id ?? '')).rejects.toThrow()
   })
 
-  it('chat: conversations, messages, send and the polling reply', async () => {
+  it('chat: conversations, messages and a persisted send', async () => {
     const conversations = await fetchConversations()
     expect(conversations).toHaveLength(3)
 
@@ -114,17 +114,11 @@ describe('feature api layer', () => {
     const messages = await fetchMessages(id)
     expect(messages).toHaveLength(10)
 
-    const last = messages[messages.length - 1]
-    const after = await fetchMessages(id, last?.sentAt)
-    expect(after).toHaveLength(0)
-
     const sent = await sendMessage(id, 'Hello from the api test')
     expect(sent.senderRole).toBe('patient')
 
-    // the mock schedules the provider's reply ~1.5s later
-    await new Promise((resolve) => setTimeout(resolve, 2200))
-    const withReply = await fetchMessages(id)
-    expect(withReply.length).toBe(messages.length + 2)
-    expect(withReply[withReply.length - 1]?.senderRole).toBe('provider')
+    const afterSend = await fetchMessages(id)
+    expect(afterSend.length).toBe(messages.length + 1)
+    expect(afterSend[afterSend.length - 1]?.body).toBe('Hello from the api test')
   })
 })

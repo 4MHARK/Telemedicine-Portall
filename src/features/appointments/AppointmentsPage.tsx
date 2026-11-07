@@ -12,7 +12,7 @@ import type { Appointment, Provider } from '@/types'
 import { useAppointments } from './queries'
 import { AppointmentStatusBadge } from './status-badge'
 
-const PAST_STATUSES = new Set(['completed', 'cancelled', 'no_show'])
+const PAST_STATUSES = new Set(['completed', 'cancelled', 'no_show', 'expired'])
 
 function AppointmentRow({
   appointment,

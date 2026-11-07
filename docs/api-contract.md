@@ -2,26 +2,38 @@
 
 Base URL: `/api`
 Content type: `application/json` except uploads (`multipart/form-data`).
-Auth: `Authorization: Bearer <token>` on every route except `/auth/*`,
-`/specialties`, and `/providers*`. The two public data endpoints are required
-by the public `/doctors` routes (decisions.md row 20).
+Auth: an HTTP-only `tm_session` cookie on every route except `/auth/*`,
+`/specialties`, and `/providers*`. The public data endpoints are required by the
+public `/doctors` routes (decisions.md row 20). `POST /payments/webhook` is
+authenticated by its HMAC signature instead.
 Errors: always `ApiErrorBody` shape with the correct HTTP status.
 
 ## Auth
 
+Session responses are `{ account, patient? , provider? }`. `account` is
+`{ id, email, role: 'patient' | 'doctor', isActive }`. The cookie is set by the
+server; JavaScript never receives a token.
+
+### `POST /auth/register`
+- **Req:** `{ email, password, firstName, lastName, phone, dateOfBirth }`
+- **Res 201:** `AuthSession` + `Set-Cookie: tm_session=...`
+- **Res 409:** `EMAIL_TAKEN`
+- **Res 422:** `VALIDATION` with field errors
+
 ### `POST /auth/login`
 - **Req:** `{ email: string, password: string }`
-- **Res 200:** `AuthSession`
+- **Res 200:** `AuthSession` + session cookie
 - **Res 401:** `{ code: "INVALID_CREDENTIALS", message }`
-- **Mock:** any non-empty credentials succeed; token expires in 60 min.
+- **Roles:** patient and doctor use the same form; the response's `account.role`
+  decides the landing page.
 
 ### `POST /auth/logout`
-- **Res 204**
+- **Res 204**; revokes the session row and clears the cookie.
 
 ### `GET /auth/me`
-- **Res 200:** `Patient`
-- **Res 401:** if token missing / invalid / expired
-- **Used on boot** to rehydrate session; the global 401 handler catches failure.
+- **Res 200:** `AuthSession`
+- **Res 401:** if the cookie is missing / invalid / expired / revoked
+- **Used on boot** to rehydrate session; route loaders also call it.
 
 ## Specialties
 
@@ -104,7 +116,48 @@ Errors: always `ApiErrorBody` shape with the correct HTTP status.
 ### `POST /conversations/:id/messages`
 - **Req:** `{ body: string }`
 - **Res 201:** `ChatMessage`
-- **Mock:** after ~1.5 s the provider replies once, on the next poll.
+- **Live:** a signed-in doctor replies through the same endpoint; the patient
+  sees it on the next poll. There is no simulated auto-reply.
+
+## Payments
+
+### `POST /payments/initialize`
+- **Auth:** patient session
+- **Req:** `{ appointmentId: string }`
+- **Res 200:** `{ payment: Payment, appointment: Appointment }`; the payment
+  carries `accessCode` for the Paystack inline popup.
+- **Res 409:** `HOLD_EXPIRED` / `PAYMENT_ALREADY_SUCCEEDED`
+
+### `POST /payments/verify`
+- **Auth:** patient session; the payment must belong to that patient
+- **Req:** `{ reference: string }`
+- **Res 200:** `{ payment: Payment, appointment: Appointment }`
+- **Res 409:** `PAYMENT_MISMATCH` if amount or currency differs
+
+### `POST /payments/webhook`
+- **Auth:** `x-paystack-signature` = HMAC-SHA512 of the raw body with the
+  Paystack secret key
+- **Res 200:** verified event accepted; duplicate settlement is a no-op
+- **Res 401:** invalid signature
+
+### `GET /payments/:reference`
+- **Auth:** patient session; own payment only
+
+## Provider portal
+
+All routes require a doctor session. A patient receives `403 FORBIDDEN`.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/provider/me` | own profile, fees, account email |
+| `PATCH` | `/provider/me` | title, bio, languages, consultation types |
+| `GET` | `/provider/fees` | current consultation prices |
+| `PUT` | `/provider/fees` | `{ fees: [{ consultationType, amountMinor }] }` |
+| `GET` | `/provider/slots?from&to` | own slots, including booked |
+| `POST` | `/provider/slots` | `{ start, end }`; future, 15–120 minutes |
+| `DELETE` | `/provider/slots/:id` | only an unbooked slot |
+| `GET` | `/provider/appointments` | own appointments with `patientName` |
+| `PATCH` | `/provider/appointments/:id` | `{ status: "completed" \| "no_show", notes? }` |
 
 ## Simulated Conditions (DEV)
 

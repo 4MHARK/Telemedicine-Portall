@@ -12,7 +12,8 @@ import type { ConsultationType } from './provider'
 //          ├──► cancelled   (cancelledAt, cancelReason set)
 //          └──► no_show
 //
-export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+export type AppointmentStatus =
+  'pending_payment' | 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'expired'
 
 export interface Appointment {
   id: UUID
@@ -25,7 +26,16 @@ export interface Appointment {
   notes?: string // provider notes, post-visit
   scheduledAt: ISODateString // denormalized from slot.start
   durationMinutes: number
+  amountMinor: number
+  currency: string
+  holdExpiresAt: ISODateString | null
+  confirmedAt?: ISODateString
   createdAt: ISODateString
   cancelledAt?: ISODateString
   cancelReason?: string
+}
+
+/** Doctor-facing appointment rows include the patient's display name. */
+export interface ProviderAppointment extends Appointment {
+  patientName: string
 }

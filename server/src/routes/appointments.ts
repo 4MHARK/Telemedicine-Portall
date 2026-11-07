@@ -10,9 +10,10 @@ import {
   notFound,
   routeParam,
 } from '../lib/http.js'
+import { refundCancelledPayment } from '../lib/payments.js'
 import { prisma } from '../lib/prisma.js'
 import { serializeAppointment } from '../lib/serialize.js'
-import { currentPatient, requireAuth } from '../middleware/auth.js'
+import { currentPatient, requirePatient } from '../middleware/auth.js'
 import { parseBody, parseQuery } from '../middleware/validate.js'
 
 const CONSULTATION_ENUM = {
@@ -22,19 +23,24 @@ const CONSULTATION_ENUM = {
 } as const
 
 const STATUS_ENUM = {
+  pending_payment: 'PENDING_PAYMENT',
   scheduled: 'SCHEDULED',
   completed: 'COMPLETED',
   cancelled: 'CANCELLED',
   no_show: 'NO_SHOW',
+  expired: 'EXPIRED',
 } as const
 
 type StatusValue = keyof typeof STATUS_ENUM
+
+const HOLD_TTL_MINUTES = Number(process.env.HOLD_TTL_MINUTES ?? 10)
+const HOLD_TTL_MS = (Number.isFinite(HOLD_TTL_MINUTES) ? HOLD_TTL_MINUTES : 10) * 60_000
 
 const createSchema = z.object({
   providerId: z.string().min(1, '`providerId` is required.'),
   slotId: z.string().min(1, '`slotId` is required.'),
   consultationType: z.enum(['video', 'phone', 'async'], {
-    errorMap: () => ({ message: '`consultationType` must be one of video, phone, async.' }),
+    error: '`consultationType` must be one of video, phone, async.',
   }),
   reason: z
     .string()
@@ -66,7 +72,7 @@ function appointmentId(req: Parameters<typeof currentPatient>[0]): string {
 
 export const appointmentsRouter = Router()
 
-appointmentsRouter.use(requireAuth)
+appointmentsRouter.use(requirePatient)
 
 appointmentsRouter.post(
   '/',
@@ -74,11 +80,29 @@ appointmentsRouter.post(
     const patient = currentPatient(req)
     const body = parseBody(createSchema, req)
 
-    const provider = await prisma.provider.findUnique({
-      where: { id: body.providerId },
-      select: { id: true },
+    const provider = await prisma.provider.findFirst({
+      where: { id: body.providerId, isActive: true },
+      select: { id: true, consultationTypes: true },
     })
     if (!provider) throw notFound('Provider not found.')
+
+    const consultationType = CONSULTATION_ENUM[body.consultationType]
+    if (!provider.consultationTypes.includes(consultationType)) {
+      throw badRequest('Request body failed schema validation.', {
+        consultationType: ['That provider does not offer this consultation type.'],
+      })
+    }
+
+    const fee = await prisma.consultationFee.findUnique({
+      where: {
+        providerId_consultationType: { providerId: provider.id, consultationType },
+      },
+    })
+    if (!fee) {
+      throw badRequest('Request body failed schema validation.', {
+        consultationType: ['This provider has not set a fee for that consultation type.'],
+      })
+    }
 
     const slot = await prisma.availabilitySlot.findUnique({ where: { id: body.slotId } })
     if (!slot) throw notFound('Slot not found.')
@@ -109,11 +133,14 @@ appointmentsRouter.post(
           patientId: patient.id,
           providerId: provider.id,
           slotId: slot.id,
-          consultationType: CONSULTATION_ENUM[body.consultationType],
-          status: 'SCHEDULED',
+          consultationType,
+          status: 'PENDING_PAYMENT',
           reason: body.reason,
           scheduledAt: slot.start,
           durationMinutes: Math.round((slot.end.getTime() - slot.start.getTime()) / 60_000),
+          amountMinor: fee.amountMinor,
+          currency: fee.currency,
+          holdExpiresAt: new Date(Date.now() + HOLD_TTL_MS),
         },
       })
     })
@@ -131,7 +158,9 @@ appointmentsRouter.get(
 
     if (rawStatus && !isStatusValue(rawStatus)) {
       throw badRequest('Query parameters are invalid.', {
-        status: ['`status` must be one of scheduled, completed, cancelled, no_show.'],
+        status: [
+          '`status` must be one of pending_payment, scheduled, completed, cancelled, no_show, expired.',
+        ],
       })
     }
 
@@ -185,7 +214,7 @@ appointmentsRouter.patch(
     if (appointment.patientId !== patient.id) {
       throw forbidden('This appointment belongs to another patient.')
     }
-    if (appointment.status !== 'SCHEDULED') {
+    if (appointment.status !== 'PENDING_PAYMENT' && appointment.status !== 'SCHEDULED') {
       throw new AppError(
         409,
         'VALIDATION',
@@ -209,8 +238,29 @@ appointmentsRouter.patch(
         data: { status: 'AVAILABLE' },
       })
 
+      // An unpaid hold has no money to refund. A paid cancellation is marked
+      // refund-pending; Paystack confirms the refund separately.
+      await tx.payment.updateMany({
+        where: { appointmentId: appointment.id, status: 'PENDING' },
+        data: { status: 'ABANDONED' },
+      })
+      await tx.payment.updateMany({
+        where: {
+          appointmentId: appointment.id,
+          status: 'SUCCEEDED',
+          refundStatus: 'NOT_REQUIRED',
+        },
+        data: { refundStatus: 'PENDING' },
+      })
+
       return next
     })
+
+    if (appointment.status === 'SCHEDULED') {
+      await refundCancelledPayment(appointment.id).catch((error: unknown) => {
+        console.error('Cancellation refund failed.', error)
+      })
+    }
 
     res.json(serializeAppointment(updated))
   }),

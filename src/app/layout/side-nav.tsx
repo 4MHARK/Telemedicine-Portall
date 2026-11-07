@@ -1,10 +1,14 @@
 import { Link } from 'react-router'
 
+import { useAuth } from '@/features/auth'
 import { cn } from '@/lib/utils'
-import { isNavItemActive, NAV_ITEMS } from './nav-items'
+import { isNavItemActive, navItemsForRole } from './nav-items'
 
 /** docs/routes.md: full sidebar from `lg` up. */
 export function SideNav({ currentPath }: { currentPath: string }) {
+  const { session } = useAuth()
+  const items = navItemsForRole(session?.account.role)
+
   return (
     <nav
       aria-label="Main"
@@ -12,7 +16,7 @@ export function SideNav({ currentPath }: { currentPath: string }) {
       data-slot="side-nav"
     >
       <ul className="flex flex-col gap-1 p-3">
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+        {items.map(({ to, label, icon: Icon }) => {
           const active = isNavItemActive(currentPath, to)
           return (
             <li key={to}>

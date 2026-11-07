@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express'
-import { ZodError } from 'zod'
+import { z, ZodError } from 'zod'
 
 import { AppError } from '../lib/http.js'
 
@@ -14,7 +14,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function zodFieldErrors(error: ZodError): Record<string, string[]> {
-  const flattened = error.flatten().fieldErrors
+  const flattened = z.flattenError(error).fieldErrors as Record<string, string[] | undefined>
   const out: Record<string, string[]> = {}
   for (const [field, messages] of Object.entries(flattened)) {
     if (messages && messages.length > 0) out[field] = messages
