@@ -8,6 +8,17 @@ export default defineConfig(({ mode }) => {
   // Loaded from .env files as well as the shell, so VITE_BASE_PATH works as
   // documented in .env.example. "/" is the default for root deployments.
   const env = loadEnv(mode, process.cwd(), 'VITE_')
+
+  // A production artifact must never use the mock API or the simulate-payment
+  // button. Fail the build instead of shipping a demo that cannot reach the
+  // real backend.
+  if (mode === 'production' && env.VITE_ENABLE_MOCKS === 'true') {
+    throw new Error('Refusing to build: VITE_ENABLE_MOCKS=true is development-only.')
+  }
+  if (mode === 'production' && env.VITE_PAYMENTS_FAKE === 'true') {
+    throw new Error('Refusing to build: VITE_PAYMENTS_FAKE=true is test-only.')
+  }
+
   const apiProxy = {
     '/api': {
       target: env.VITE_API_PROXY_TARGET ?? 'http://localhost:3001',

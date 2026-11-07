@@ -11,6 +11,7 @@ export default function DashboardPage() {
   usePageTitle('Doctor dashboard')
   const me = useProviderMe()
   const appointments = useProviderAppointments('scheduled')
+  const pending = useProviderAppointments('pending_payment')
 
   return (
     <>
@@ -26,7 +27,7 @@ export default function DashboardPage() {
 
       <AsyncStatus query={me} skeleton={<LoadingSkeleton variant="detail" />}>
         {(profile) => (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -49,6 +50,22 @@ export default function DashboardPage() {
                   render={<Link to="/provider/appointments" />}
                 >
                   Manage appointments
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{pending.data?.length ?? 0}</CardTitle>
+                <CardDescription>Awaiting patient payment</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="outline"
+                  nativeButton={false}
+                  render={<Link to="/provider/appointments" />}
+                >
+                  View pending
                 </Button>
               </CardContent>
             </Card>
@@ -96,6 +113,37 @@ export default function DashboardPage() {
                 >
                   <span className="font-medium">{appointment.patientName}</span>
                   <span className="text-text-muted">{formatDateTime(appointment.scheduledAt)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </AsyncStatus>
+      </div>
+
+      <div className="mt-6">
+        <h2 className="mb-3 text-lg font-semibold">Awaiting payment</h2>
+        <AsyncStatus
+          query={pending}
+          skeleton={<LoadingSkeleton />}
+          isEmpty={(rows) => rows.length === 0}
+          empty={
+            <p className="text-text-muted text-sm">
+              No patient is currently holding a slot. A patient who starts checkout appears here
+              until payment succeeds or the hold expires.
+            </p>
+          }
+        >
+          {(rows) => (
+            <ul className="flex flex-col gap-2">
+              {rows.slice(0, 5).map((appointment) => (
+                <li
+                  key={appointment.id}
+                  className="border-input flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm"
+                >
+                  <span className="font-medium">{appointment.patientName}</span>
+                  <span className="text-text-muted">
+                    {formatDateTime(appointment.scheduledAt)} · awaiting payment
+                  </span>
                 </li>
               ))}
             </ul>

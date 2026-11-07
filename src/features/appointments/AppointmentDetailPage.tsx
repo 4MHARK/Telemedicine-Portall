@@ -99,8 +99,23 @@ export default function AppointmentDetailPage() {
           <AppointmentStatusBadge status={data.status} />
           <span className="text-text-muted text-sm">{formatDateTime(data.scheduledAt)}</span>
           {data.status === 'pending_payment' ? (
-            <Button size="sm" nativeButton={false} render={<Link to={`/checkout/${data.id}`} />}>
-              Pay now
+            <>
+              <Button size="sm" nativeButton={false} render={<Link to={`/checkout/${data.id}`} />}>
+                Pay now
+              </Button>
+              <span className="text-text-muted text-xs">
+                Messaging opens after payment is confirmed.
+              </span>
+            </>
+          ) : null}
+          {data.status === 'scheduled' ? (
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={<Link to="/messages" />}
+            >
+              Message your doctor
             </Button>
           ) : null}
         </div>
