@@ -6,7 +6,6 @@ import type { ApiErrorBody, Document } from '@/types'
 export interface UploadProgress {
   url: string
   file: File
-  token?: string | null
   appointmentId?: string
   onProgress?: (percent: number) => void
 }
@@ -25,14 +24,13 @@ function parseBody(raw: string): Partial<ApiErrorBody> & Partial<Document> {
 export function uploadWithXhr({
   url,
   file,
-  token,
   appointmentId,
   onProgress,
 }: UploadProgress): Promise<Document> {
   return new Promise<Document>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', url)
-    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.withCredentials = true
 
     // Real progress where the browser reports it.
     xhr.upload.onprogress = (event) => {

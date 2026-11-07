@@ -21,6 +21,14 @@ export function formatRating(rating: number): string {
   return rating.toFixed(1)
 }
 
+/** Minor units (kobo) to a localized currency string. */
+export function formatMoney(amountMinor: number, currency = 'NGN'): string {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency,
+  }).format(amountMinor / 100)
+}
+
 export function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
   const units = ['B', 'KB', 'MB', 'GB'] as const

@@ -12,6 +12,7 @@ export interface ReviewStepProps {
   values: WizardValues
   providerName: string
   slotStart: string | null
+  feeLabel?: string | null
   /** On the final step the summary is repeated with an explicit confirmation. */
   confirming: boolean
   onEdit: (step: number) => void
@@ -21,6 +22,7 @@ export function ReviewStep({
   values,
   providerName,
   slotStart,
+  feeLabel,
   confirming,
   onEdit,
 }: ReviewStepProps) {
@@ -32,6 +34,7 @@ export function ReviewStep({
       value: values.consultationType ? CONSULTATION_LABELS[values.consultationType] : 'Not chosen',
       step: 1,
     },
+    ...(feeLabel ? [{ label: 'Price', value: feeLabel, step: 1 }] : []),
     { label: 'Reason', value: values.reason || 'Not provided', step: 2 },
   ]
 

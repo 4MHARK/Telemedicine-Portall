@@ -16,6 +16,8 @@ export interface Conversation {
   id: UUID
   patientId: UUID
   providerId: UUID
+  patientName?: string
+  providerName?: string
   lastMessageAt: ISODateString
   lastMessagePreview: string
   unreadCount: number

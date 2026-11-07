@@ -69,9 +69,11 @@ providersRouter.get(
     const [specialties, providerRows] = await Promise.all([
       prisma.specialty.findMany({ select: { id: true, slug: true } }),
       prisma.provider.findMany({
+        where: { isActive: true },
         orderBy: { id: 'asc' },
         include: {
           specialties: { select: { specialtyId: true } },
+          fees: true,
           slots: {
             where: { status: 'AVAILABLE', start: { gt: new Date() } },
             orderBy: { start: 'asc' },
@@ -135,10 +137,11 @@ providersRouter.get(
 providersRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    const provider = await prisma.provider.findUnique({
-      where: { id: routeParam(req, 'id') },
+    const provider = await prisma.provider.findFirst({
+      where: { id: routeParam(req, 'id'), isActive: true },
       include: {
         specialties: { select: { specialtyId: true } },
+        fees: true,
         slots: {
           where: { status: 'AVAILABLE', start: { gt: new Date() } },
           orderBy: { start: 'asc' },

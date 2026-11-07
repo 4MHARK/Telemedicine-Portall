@@ -31,9 +31,9 @@ interface Patient {
 }
 
 interface AuthSession {
-  token: string
-  expiresAt: string
+  token: string // the tm_session cookie value, kept as a jar
   patient: Patient
+  account: { id: string; email: string; role: string; isActive: boolean }
 }
 
 interface Specialty {
@@ -135,6 +135,7 @@ interface SeedResult {
 interface Result<T = unknown> {
   status: number
   body: T | ApiError | null
+  setCookie?: string
 }
 
 let passed = 0
@@ -173,7 +174,7 @@ async function call<T>(
   } = {},
 ): Promise<Result<T>> {
   const headers: Record<string, string> = { ...options.headers }
-  if (options.token) headers.Authorization = `Bearer ${options.token}`
+  if (options.token) headers.Cookie = options.token
 
   let body: string | FormData | undefined
   if (options.form) {
@@ -195,7 +196,12 @@ async function call<T>(
     }
   }
 
-  return { status: response.status, body: parsed as T | ApiError | null }
+  const setCookie = response.headers.getSetCookie()[0]
+  return {
+    status: response.status,
+    body: parsed as T | ApiError | null,
+    ...(setCookie ? { setCookie } : {}),
+  }
 }
 
 function errorCode(result: Result): string {
@@ -217,8 +223,13 @@ async function login(email: string, password: string): Promise<AuthSession | nul
   const result = await call<AuthSession>('POST', '/api/auth/login', {
     body: { email, password },
   })
-  if (result.status !== 200) return null
-  return result.body as AuthSession
+  if (result.status !== 200 || !result.setCookie) return null
+  const body = result.body as AuthSession
+  return {
+    token: result.setCookie.split(';')[0] ?? '',
+    patient: body.patient,
+    account: body.account,
+  }
 }
 
 async function main(): Promise<void> {
@@ -258,11 +269,8 @@ async function main(): Promise<void> {
 
   const session = await login(EMAIL, PASSWORD)
   check(
-    'POST /api/auth/login returns AuthSession {token, expiresAt, patient}',
-    session !== null &&
-      typeof session.token === 'string' &&
-      typeof session.expiresAt === 'string' &&
-      session.patient.email === EMAIL,
+    'POST /api/auth/login returns a session cookie and the patient',
+    session !== null && session.token.length > 0 && session.patient.email === EMAIL,
     `status ${session ? 200 : 'failed'}`,
   )
 
@@ -280,10 +288,10 @@ async function main(): Promise<void> {
     `status ${meWithoutToken.status}`,
   )
 
-  const me = await call<Patient>('GET', '/api/auth/me', { token })
+  const me = await call<AuthSession>('GET', '/api/auth/me', { token })
   check(
     'GET /api/auth/me returns the signed-in patient',
-    me.status === 200 && (me.body as Patient).id === session.patient.id,
+    me.status === 200 && (me.body as AuthSession).patient?.id === session.patient.id,
     `status ${me.status}`,
   )
 
@@ -426,9 +434,9 @@ async function main(): Promise<void> {
   })
   const booked = booking.body as Appointment
   check(
-    'POST /api/appointments books an available slot (201 scheduled)',
+    'POST /api/appointments holds an available slot (201 pending_payment)',
     booking.status === 201 &&
-      booked.status === 'scheduled' &&
+      booked.status === 'pending_payment' &&
       booked.slotId === availableSlot.id &&
       booked.patientId === session.patient.id,
     `status ${booking.status}`,
@@ -449,6 +457,48 @@ async function main(): Promise<void> {
     `status ${duplicateBooking.status}`,
   )
 
+  const initialized = await call<{
+    payment: { reference: string; accessCode?: string }
+    appointment: Appointment
+  }>('POST', '/api/payments/initialize', {
+    token,
+    body: { appointmentId: booked.id },
+  })
+  const initBody = initialized.body as {
+    payment: { reference: string; accessCode?: string }
+  }
+  check(
+    'POST /api/payments/initialize returns an access code for the held slot',
+    initialized.status === 200 &&
+      typeof initBody.payment?.reference === 'string' &&
+      typeof initBody.payment?.accessCode === 'string',
+    `status ${initialized.status}`,
+  )
+
+  if (process.env.PAYSTACK_FAKE === 'true' && initialized.status === 200) {
+    const verified = await call<{ payment: { status: string }; appointment: Appointment }>(
+      'POST',
+      '/api/payments/verify',
+      { token, body: { reference: initBody.payment.reference } },
+    )
+    const verifiedBody = verified.body as {
+      payment: { status: string }
+      appointment: Appointment
+    }
+    check(
+      'POST /api/payments/verify confirms the appointment with the fake provider',
+      verified.status === 200 &&
+        verifiedBody.payment?.status === 'succeeded' &&
+        verifiedBody.appointment?.status === 'scheduled',
+      `status ${verified.status}`,
+    )
+  } else {
+    skip(
+      'POST /api/payments/verify confirms the appointment',
+      'PAYSTACK_FAKE is not true; use a real test transaction or the fake provider',
+    )
+  }
+
   const otherSession = await login(OTHER_EMAIL, PASSWORD)
   check('A second seeded patient can sign in', otherSession !== null, EMAIL)
 
@@ -468,7 +518,7 @@ async function main(): Promise<void> {
     body: { status: 'cancelled', cancelReason: 'Smoke test' },
   })
   check(
-    'PATCH /api/appointments/:id cancels a scheduled visit',
+    'PATCH /api/appointments/:id cancels the held or scheduled visit',
     cancel.status === 200 && (cancel.body as Appointment).status === 'cancelled',
     `status ${cancel.status}`,
   )
@@ -568,12 +618,16 @@ async function main(): Promise<void> {
   const conversations = await call<Conversation[]>('GET', '/api/conversations', { token })
   const conversationList = (conversations.body as Conversation[]) ?? []
   check(
-    'GET /api/conversations returns the 3 seeded conversations',
-    conversations.status === 200 && conversationList.length === 3,
+    'GET /api/conversations returns the seeded conversations',
+    conversations.status === 200 && conversationList.length >= 3,
     `status ${conversations.status} count ${conversationList.length}`,
   )
 
-  const conversationId = conversationList[0]?.id
+  // Prefer the known seeded thread; the payment test above creates an empty
+  // conversation with a newer timestamp.
+  const conversationId =
+    conversationList.find((conversation) => conversation.id === 'cnv_01')?.id ??
+    conversationList[0]?.id
   if (!conversationId) {
     console.log('\nNo conversation to exercise chat against.')
     return
@@ -628,22 +682,35 @@ async function main(): Promise<void> {
     )
   }
 
-  // The provider reply is written after 1.5s; the client's poll is 3s.
-  await new Promise((resolve) => setTimeout(resolve, 2_000))
-  const after = await call<ChatMessage[]>(
-    'GET',
-    `/api/conversations/${conversationId}/messages?after=${encodeURIComponent(sent.sentAt)}`,
-    { token },
-  )
-  const replies = (after.body as ChatMessage[]) ?? []
-  check(
-    'The provider auto-reply appears on the next poll',
-    after.status === 200 &&
-      replies.some(
-        (message) => message.senderRole === 'provider' && message.status === 'delivered',
-      ),
-    `status ${after.status} replies ${replies.length}`,
-  )
+  // The seeded cnv_01 belongs to prv_03; that doctor can reply through the
+  // same role-aware endpoint the portal uses.
+  const doctorSession = await login('dr.daniel.silva.prv_03@doctors.example', PASSWORD)
+  if (doctorSession) {
+    const doctorReply = await call<ChatMessage>(
+      'POST',
+      `/api/conversations/${conversationId}/messages`,
+      { token: doctorSession.token, body: { body: 'Doctor smoke reply' } },
+    )
+    check(
+      'A doctor can reply in the conversation',
+      doctorReply.status === 201 && (doctorReply.body as ChatMessage).senderRole === 'provider',
+      `status ${doctorReply.status}`,
+    )
+
+    const after = await call<ChatMessage[]>(
+      'GET',
+      `/api/conversations/${conversationId}/messages?after=${encodeURIComponent(sent.sentAt)}`,
+      { token },
+    )
+    const replies = (after.body as ChatMessage[]) ?? []
+    check(
+      'The patient poll sees the doctor reply',
+      after.status === 200 && replies.some((message) => message.senderRole === 'provider'),
+      `status ${after.status} replies ${replies.length}`,
+    )
+  } else {
+    skip('A doctor can reply in the conversation', 'doctor login failed')
+  }
 
   // 8. Unknown route
   const unknown = await call<ApiError>('GET', '/api/nope')

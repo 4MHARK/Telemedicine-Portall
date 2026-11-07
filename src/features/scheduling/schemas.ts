@@ -7,7 +7,7 @@ import { z } from 'zod'
 export const wizardSchema = z.object({
   slotId: z.string().min(1, 'Choose a time slot.'),
   consultationType: z.enum(['video', 'phone', 'async'], {
-    errorMap: () => ({ message: 'Choose a consultation type.' }),
+    error: 'Choose a consultation type.',
   }),
   reason: z
     .string()

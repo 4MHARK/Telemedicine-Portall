@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { UnheadProvider, createHead } from '@unhead/react/client'
 import { render } from '@testing-library/react'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -11,53 +11,35 @@ import { AuthProvider } from '@/features/auth'
 // router's lazy import.
 import { UploadProvider } from '@/features/documents/UploadProvider'
 import { ThemeProvider } from '@/features/theme'
-import { encodeJwt } from '@/lib/jwt'
-import { writeSession } from '@/lib/session'
-import type { AuthSession } from '@/types'
+import { queryClient } from '@/lib/queryClient'
+import { mockSignIn } from '@/mocks/session'
+import type { AccountRole, AuthSession } from '@/types'
 
-/** Mints a session the same way the mock API does, without a network round trip. */
-export function testSession(ttlSeconds = 3600): AuthSession {
-  const iat = Math.floor(Date.now() / 1000)
-  const payload = { sub: 'pat_01', role: 'patient' as const, iat, exp: iat + ttlSeconds }
-
-  return {
-    token: encodeJwt(payload),
-    expiresAt: new Date(payload.exp * 1000).toISOString(),
-    patient: {
-      id: 'pat_01',
-      firstName: 'Nadia',
-      lastName: 'Okafor',
-      email: 'nadia.okafor@example.com',
-      phone: '+1-555-0100',
-      dateOfBirth: '1990-01-01T00:00:00.000Z',
-      // Matches the seeded patient in src/mocks/db.ts.
-      insuranceProvider: 'Blue Cross',
-      insuranceMemberId: 'BC-4471902',
-    },
-  }
+export function testSession(role: AccountRole = 'patient'): AuthSession {
+  return mockSignIn(role)
 }
 
-export function signInForTest(ttlSeconds = 3600): AuthSession {
-  const session = testSession(ttlSeconds)
-  writeSession(session)
-  return session
+export function signInForTest(role: AccountRole = 'patient'): AuthSession {
+  return mockSignIn(role)
 }
 
 export interface RenderAppOptions {
-  /** Write a valid session before mounting. */
+  /** Establish a mock session before mounting. */
   authed?: boolean
+  role?: AccountRole
 }
 
 /**
  * Mounts the real route table behind the real provider stack, on a memory
  * router. The whole app is exercised: guards, lazy pages, and the mock API.
  */
-export function renderApp(initialPath = '/', { authed = false }: RenderAppOptions = {}) {
-  if (authed) signInForTest()
+export function renderApp(
+  initialPath = '/',
+  { authed = false, role = 'patient' }: RenderAppOptions = {},
+) {
+  if (authed) signInForTest(role)
+  queryClient.clear()
 
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  })
   const router = createMemoryRouter(routes, { initialEntries: [initialPath] })
 
   const utils = render(

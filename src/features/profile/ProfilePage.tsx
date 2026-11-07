@@ -5,7 +5,7 @@ import { EmptyState, PageHeader } from '@/components/shared'
 import { Button } from '@/components/ui/button'
 import { useAuth, useLogout } from '@/features/auth'
 import { usePageTitle } from '@/hooks/use-page-title'
-import { formatDate, formatDateTime } from '@/lib/format'
+import { formatDate } from '@/lib/format'
 import type { Patient } from '@/types'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -76,7 +76,7 @@ export default function ProfilePage() {
     <>
       <PageHeader
         title="Profile"
-        description="Your details as they are stored on this device."
+        description="Your details as they are stored in your account."
         actions={
           <img
             src={patient.avatarUrl}
@@ -96,9 +96,9 @@ export default function ProfilePage() {
           <Row label="Member ID" value={patient.insuranceMemberId ?? 'Not provided'} />
         </Section>
 
-        <Section title="Session">
-          <Row label="Signed in as" value={patient.email} />
-          <Row label="Token expires" value={session ? formatDateTime(session.expiresAt) : '—'} />
+        <Section title="Account">
+          <Row label="Signed in as" value={session.account.email} />
+          <Row label="Role" value={session.account.role} />
         </Section>
 
         {logout.isError ? (

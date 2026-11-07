@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useProvider } from '@/features/providers'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { ApiError } from '@/lib/apiClient'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, formatMoney } from '@/lib/format'
 import { useAppointment, useCancelAppointment } from './queries'
 import { AppointmentDocuments } from './AppointmentDocuments'
 import { AppointmentStatusBadge } from './status-badge'
@@ -62,7 +62,7 @@ export default function AppointmentDetailPage() {
   }
 
   const data = appointment.data
-  const canCancel = data.status === 'scheduled'
+  const canCancel = data.status === 'scheduled' || data.status === 'pending_payment'
 
   const rows: ReadonlyArray<{ label: string; value: string }> = [
     { label: 'When', value: formatDateTime(data.scheduledAt) },
@@ -71,6 +71,10 @@ export default function AppointmentDetailPage() {
       label: 'Consultation',
       value: data.consultationType.charAt(0).toUpperCase() + data.consultationType.slice(1),
     },
+    { label: 'Price', value: formatMoney(data.amountMinor, data.currency) },
+    ...(data.holdExpiresAt
+      ? [{ label: 'Payment hold expires', value: formatDateTime(data.holdExpiresAt) }]
+      : []),
     { label: 'Reason', value: data.reason },
     { label: 'Booked', value: formatDateTime(data.createdAt) },
     ...(data.notes ? [{ label: 'Provider notes', value: data.notes }] : []),
@@ -91,9 +95,29 @@ export default function AppointmentDetailPage() {
       />
 
       <div className="grid max-w-3xl gap-6">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <AppointmentStatusBadge status={data.status} />
           <span className="text-text-muted text-sm">{formatDateTime(data.scheduledAt)}</span>
+          {data.status === 'pending_payment' ? (
+            <>
+              <Button size="sm" nativeButton={false} render={<Link to={`/checkout/${data.id}`} />}>
+                Pay now
+              </Button>
+              <span className="text-text-muted text-xs">
+                Messaging opens after payment is confirmed.
+              </span>
+            </>
+          ) : null}
+          {data.status === 'scheduled' ? (
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={<Link to="/messages" />}
+            >
+              Message your doctor
+            </Button>
+          ) : null}
         </div>
 
         <section aria-label="Appointment details">
@@ -172,7 +196,7 @@ export default function AppointmentDetailPage() {
           />
           {!canCancel ? (
             <p className="text-text-muted mt-2 text-xs">
-              Only scheduled appointments can be cancelled.
+              Only an appointment awaiting payment or still scheduled can be cancelled.
             </p>
           ) : null}
         </div>

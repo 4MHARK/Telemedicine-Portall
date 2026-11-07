@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { AsyncStatus, LoadingSkeleton, PageHeader } from '@/components/shared'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/features/auth'
 import { useProviders } from '@/features/providers'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { queryKeys } from '@/lib/queryKeys'
@@ -22,6 +23,9 @@ export default function ChatPage() {
   const { conversationId = '' } = useParams()
   usePageTitle('Conversation')
 
+  const { session } = useAuth()
+  const isDoctor = session?.account.role === 'doctor'
+  const basePath = isDoctor ? '/provider/messages' : '/messages'
   const messages = useMessages(conversationId)
   const send = useSendMessage(conversationId)
   const conversations = useConversations()
@@ -32,6 +36,7 @@ export default function ChatPage() {
   const provider = conversation
     ? directory.data?.items.find((p) => p.id === conversation.providerId)
     : undefined
+  const displayName = isDoctor ? (conversation?.patientName ?? 'Patient') : providerName(provider)
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -69,11 +74,11 @@ export default function ChatPage() {
               className="lg:hidden"
               aria-label="Back to conversations"
               nativeButton={false}
-              render={<Link to="/messages" />}
+              render={<Link to={basePath} />}
             >
               <ArrowLeft className="size-4" />
             </Button>
-            {provider ? (
+            {!isDoctor && provider ? (
               <img
                 src={provider.avatarUrl}
                 alt=""
@@ -81,10 +86,14 @@ export default function ChatPage() {
                 width={32}
                 height={32}
               />
-            ) : null}
+            ) : (
+              <span className="bg-surface-muted grid size-8 place-items-center rounded-full text-xs font-medium">
+                {displayName.slice(0, 1)}
+              </span>
+            )}
             <div className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-medium">{providerName(provider)}</span>
-              <span className="text-text-muted text-xs">Replies appear within a few seconds</span>
+              <span className="truncate text-sm font-medium">{displayName}</span>
+              <span className="text-text-muted text-xs">Messages are persisted and polled</span>
             </div>
           </header>
 

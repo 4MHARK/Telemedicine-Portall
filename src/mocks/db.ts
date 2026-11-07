@@ -240,6 +240,17 @@ function makeProvider(index: number, specialtyIds: UUID[]): Provider {
   const firstName = FIRST_NAMES[index % FIRST_NAMES.length] ?? 'Alex'
   const lastName = LAST_NAMES[index % LAST_NAMES.length] ?? 'Morgan'
   const yearsExperience = int(3, 30)
+  const consultationTypes = pickSome(CONSULTATION_TYPES, 1, 3)
+  const feeBase: Record<ConsultationType, number> = {
+    video: 1_500_000,
+    phone: 1_000_000,
+    async: 500_000,
+  }
+  const fees = consultationTypes.map((type) => ({
+    consultationType: type,
+    amountMinor: feeBase[type] + (index % 5) * 10_000,
+    currency: 'NGN',
+  }))
 
   return {
     id: `prv_${String(index + 1).padStart(2, '0')}`,
@@ -253,7 +264,8 @@ function makeProvider(index: number, specialtyIds: UUID[]): Provider {
     rating: decimal(3.8, 5, 1),
     reviewCount: int(12, 420),
     languages: ['English', ...pickSome(LANGUAGES.slice(1), 0, 2)],
-    consultationTypes: pickSome(CONSULTATION_TYPES, 1, 3),
+    consultationTypes,
+    fees,
     // Set once slots exist.
     nextAvailableAt: null,
   }
@@ -421,18 +433,24 @@ APPOINTMENT_PLAN.forEach((status, i) => {
 
   const scheduledAt = slot?.start ?? iso(at(-int(5, 60), 10))
   const createdAt = iso(Date.parse(scheduledAt) - int(2, 20) * DAY_MS)
+  const consultationType = pick(provider.consultationTypes)
+  const fee =
+    provider.fees.find((entry) => entry.consultationType === consultationType) ?? provider.fees[0]
 
   appointments.push({
     id: `apt_${String(i + 1).padStart(2, '0')}`,
     patientId: CURRENT_PATIENT_ID,
     providerId: provider.id,
     slotId: slot?.id ?? `slot_orphan_${i + 1}`,
-    consultationType: pick(provider.consultationTypes),
+    consultationType,
     status,
     reason,
     ...(status === 'completed' ? { notes: 'Reviewed and stable. Follow up in six months.' } : {}),
     scheduledAt,
     durationMinutes: 30,
+    amountMinor: fee?.amountMinor ?? 1_000_000,
+    currency: 'NGN',
+    holdExpiresAt: null,
     createdAt,
     ...(status === 'cancelled'
       ? { cancelledAt: iso(Date.parse(scheduledAt) - DAY_MS), cancelReason: pick(CANCEL_REASONS) }

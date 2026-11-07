@@ -17,6 +17,13 @@ export const queryKeys = {
     list: (status?: AppointmentStatus) => ['appointments', 'list', { status }] as const,
     detail: (id: string) => ['appointments', 'detail', id] as const,
   },
+  providerPortal: {
+    me: ['provider-portal', 'me'] as const,
+    fees: ['provider-portal', 'fees'] as const,
+    slots: (from: string, to: string) => ['provider-portal', 'slots', { from, to }] as const,
+    appointments: (status?: AppointmentStatus) =>
+      ['provider-portal', 'appointments', { status }] as const,
+  },
   documents: {
     list: ['documents', 'list'] as const,
   },

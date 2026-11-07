@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import type { ISODateString, UUID } from './common'
+import type { ProviderProfile } from './provider'
 
 // ── Patient ──────────────────────────────────────────────────
 //
@@ -21,17 +22,19 @@ export interface Patient {
   insuranceMemberId?: string
 }
 
-// ── Auth ─────────────────────────────────────────────────────
+// ── Account / session ────────────────────────────────────────
 
-export interface JwtPayload {
-  sub: UUID // patient id
-  role: 'patient'
-  iat: number // issued-at, seconds
-  exp: number // expiry, seconds
+export type AccountRole = 'patient' | 'doctor'
+
+export interface Account {
+  id: UUID
+  email: string
+  role: AccountRole
+  isActive: boolean
 }
 
 export interface AuthSession {
-  token: string // mock JWT
-  expiresAt: ISODateString
-  patient: Patient
+  account: Account
+  patient?: Patient
+  provider?: ProviderProfile
 }

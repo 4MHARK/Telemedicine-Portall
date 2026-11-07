@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Appointment, AppointmentStatus, ConsultationType, UUID } from '@/types'
 import { appointments, providers, slots } from '../db'
-import { apiError, authenticate, latency, readJson } from './shared'
+import { apiError, authenticate, latency, patientIdOf, readJson } from './shared'
 
 const CONSULTATION_TYPES: readonly ConsultationType[] = ['video', 'phone', 'async']
 
@@ -63,7 +63,7 @@ export const appointmentHandlers = [
 
     const appointment: Appointment = {
       id: `apt_new_${created}`,
-      patientId: auth.patientId as UUID,
+      patientId: patientIdOf(auth.session) as UUID,
       providerId: provider.id,
       slotId: slot.id,
       consultationType: consultationType as ConsultationType,
@@ -71,6 +71,9 @@ export const appointmentHandlers = [
       reason,
       scheduledAt: slot.start,
       durationMinutes: Math.round((Date.parse(slot.end) - Date.parse(slot.start)) / 60_000),
+      amountMinor: provider.fees[0]?.amountMinor ?? 1_000_000,
+      currency: 'NGN',
+      holdExpiresAt: null,
       createdAt: new Date().toISOString(),
     }
 
@@ -87,7 +90,7 @@ export const appointmentHandlers = [
 
     const status = new URL(request.url).searchParams.get('status')
     const result = appointments
-      .filter((a) => a.patientId === auth.patientId)
+      .filter((a) => a.patientId === patientIdOf(auth.session))
       .filter((a) => (status ? a.status === status : true))
       .sort((a, b) => Date.parse(b.scheduledAt) - Date.parse(a.scheduledAt))
 
@@ -103,7 +106,7 @@ export const appointmentHandlers = [
 
     const appointment = appointments.find((a) => a.id === String(params.id))
     if (!appointment) return apiError(404, 'NOT_FOUND', 'Appointment not found.')
-    if (appointment.patientId !== auth.patientId) {
+    if (appointment.patientId !== patientIdOf(auth.session)) {
       return apiError(403, 'FORBIDDEN', 'This appointment belongs to another patient.')
     }
 
@@ -119,7 +122,7 @@ export const appointmentHandlers = [
 
     const appointment = appointments.find((a) => a.id === String(params.id))
     if (!appointment) return apiError(404, 'NOT_FOUND', 'Appointment not found.')
-    if (appointment.patientId !== auth.patientId) {
+    if (appointment.patientId !== patientIdOf(auth.session)) {
       return apiError(403, 'FORBIDDEN', 'This appointment belongs to another patient.')
     }
 

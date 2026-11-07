@@ -7,21 +7,48 @@ import '@fontsource/inter/500.css'
 import '@fontsource/inter/600.css'
 
 import { AppProviders } from '@/app/providers'
-import { router } from '@/app/router'
 
 import './index.css'
 
+const mocksEnabled = import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCKS === 'true'
+
 /**
- * Starts the MSW service worker before the first render so no request can
- * escape to the network on boot. docs/decisions.md scopes the project to
- * mock-only data, which is true in the deployed demo as well as in dev — a
- * production build with the worker off has no backend to talk to. Set
- * VITE_DISABLE_MOCKS=true only when pointing the app at a real API.
- *
- * The worker module is imported lazily so it stays out of the main chunk.
+ * A service worker registered by an earlier mock-mode session keeps
+ * intercepting /api even after the flag is turned off. Unregister it and reload
+ * once so the browser really talks to the live backend.
+ */
+async function clearStaleMockWorker(): Promise<boolean> {
+  if (mocksEnabled || !('serviceWorker' in navigator)) return false
+
+  const registrations = await navigator.serviceWorker.getRegistrations()
+  const stale = registrations.filter((registration) =>
+    [registration.active, registration.waiting, registration.installing].some((worker) =>
+      worker?.scriptURL.includes('/mockServiceWorker.js'),
+    ),
+  )
+  if (stale.length === 0) return false
+
+  await Promise.all(stale.map((registration) => registration.unregister()))
+
+  const key = 'telemedicine-portal:mock-worker-cleared'
+  if (!window.sessionStorage.getItem(key)) {
+    window.sessionStorage.setItem(key, '1')
+    window.location.reload()
+    return true
+  }
+  return false
+}
+
+/**
+ * The live app talks to the real Express API by default. MSW is opt-in in
+ * development for isolated UI work and is always used by the Vitest node
+ * server. `import.meta.env.DEV` keeps the worker out of production bundles.
  */
 async function enableMocking(): Promise<void> {
-  if (import.meta.env.VITE_DISABLE_MOCKS === 'true') return
+  if (!mocksEnabled) {
+    console.info('[API] Live backend mode — MSW is disabled; /api goes to the Express server.')
+    return
+  }
 
   try {
     const { worker } = await import('@/mocks/browser')
@@ -41,13 +68,23 @@ async function enableMocking(): Promise<void> {
 
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error('Root element #root not found')
+const root = rootElement
 
-void enableMocking().then(() => {
-  createRoot(rootElement).render(
+async function boot(): Promise<void> {
+  if (await clearStaleMockWorker()) return
+  await enableMocking()
+
+  // Import the router only after the mock worker is ready. Creating it earlier
+  // lets the first guarded loader fire before MSW can intercept /auth/me.
+  const { router } = await import('@/app/router')
+
+  createRoot(root).render(
     <StrictMode>
       <AppProviders>
         <RouterProvider router={router} />
       </AppProviders>
     </StrictMode>,
   )
-})
+}
+
+void boot()

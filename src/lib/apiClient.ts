@@ -1,10 +1,9 @@
-// All API calls go through here: base /api, bearer token, typed ApiError.
-// A 401 clears the session and redirects to login.
+// All API calls go through here: base /api, the HTTP-only session cookie,
+// and a typed ApiError. A 401 redirects to login.
 import type { ApiErrorBody } from '@/types'
 import { LOGIN_HREF, stripBasePath } from './base-path'
-import { clearSession, readToken } from './session'
 
-export const API_BASE_URL = '/api'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 /** Carries the parsed ApiErrorBody alongside the HTTP status. */
 export class ApiError extends Error {
@@ -26,11 +25,10 @@ export class ApiError extends Error {
   }
 }
 
-// Clear the session and bounce to login with ?next.
-// /auth/* is skipped — a failed login is a 401 too, and should reach the form.
+// Bounce to login with ?next. The server owns the session cookie; the client
+// has nothing to clear. /auth/* is skipped — a failed login is a 401 too, and
+// should reach the form.
 function handleUnauthorized(): void {
-  clearSession()
-
   const { pathname, search } = window.location
   if (pathname === LOGIN_HREF) return
 
@@ -64,12 +62,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     headers.set('Content-Type', 'application/json')
   }
 
-  const token = readToken()
-  if (token && !headers.has('Authorization')) {
-    headers.set('Authorization', `Bearer ${token}`)
-  }
-
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers })
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers,
+    credentials: 'include',
+  })
 
   if (response.status === 401 && !path.startsWith('/auth/')) {
     handleUnauthorized()
@@ -98,6 +95,13 @@ export const apiClient = {
     apiRequest<T>(path, {
       ...init,
       method: 'PATCH',
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    }),
+
+  put: <T>(path: string, body?: unknown, init?: RequestInit): Promise<T> =>
+    apiRequest<T>(path, {
+      ...init,
+      method: 'PUT',
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     }),
 

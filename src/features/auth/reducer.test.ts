@@ -4,8 +4,12 @@ import type { AuthSession } from '@/types'
 import { authReducer, initialAuthState } from './reducer'
 
 const session: AuthSession = {
-  token: 'a.b.c',
-  expiresAt: '2026-01-01T11:00:00.000Z',
+  account: {
+    id: 'acc_pat_01',
+    email: 'nadia@example.com',
+    role: 'patient',
+    isActive: true,
+  },
   patient: {
     id: 'pat_01',
     firstName: 'Nadia',

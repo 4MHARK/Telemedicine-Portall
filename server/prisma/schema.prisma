@@ -9,8 +9,44 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum AccountRole {
+  PATIENT
+  DOCTOR
+}
+
+model Account {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  role         AccountRole
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  lastLoginAt  DateTime?
+  patient      Patient?
+  provider     Provider?
+  sessions     Session[]
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  accountId  String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  lastUsedAt DateTime  @default(now())
+  revokedAt  DateTime?
+  ip         String?
+  userAgent  String?
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([expiresAt])
 }
 
 enum ConsultationType {
@@ -26,10 +62,12 @@ enum SlotStatus {
 }
 
 enum AppointmentStatus {
+  PENDING_PAYMENT
   SCHEDULED
   COMPLETED
   CANCELLED
   NO_SHOW
+  EXPIRED
 }
 
 enum DocumentStatus {
@@ -52,10 +90,25 @@ enum MessageStatus {
   FAILED
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  ABANDONED
+  REFUND_PENDING
+  REFUNDED
+}
+
+enum RefundStatus {
+  NOT_REQUIRED
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
 model Patient {
   id                String   @id
-  email             String   @unique
-  passwordHash      String
+  accountId         String   @unique
   firstName         String
   lastName          String
   phone             String
@@ -65,9 +118,11 @@ model Patient {
   insuranceMemberId String?
   createdAt         DateTime @default(now())
 
+  account       Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
   appointments  Appointment[]
   documents     Document[]
   conversations Conversation[]
+  payments      Payment[]
 }
 
 model Specialty {
@@ -80,6 +135,7 @@ model Specialty {
 
 model Provider {
   id                String             @id
+  accountId         String             @unique
   firstName         String
   lastName          String
   title             String
@@ -90,11 +146,26 @@ model Provider {
   reviewCount       Int
   languages         String[]
   consultationTypes ConsultationType[]
+  isActive          Boolean            @default(true)
 
+  account       Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
   specialties   ProviderSpecialty[]
   slots         AvailabilitySlot[]
   appointments  Appointment[]
   conversations Conversation[]
+  fees          ConsultationFee[]
+}
+
+model ConsultationFee {
+  id               String           @id @default(cuid())
+  providerId       String
+  consultationType ConsultationType
+  amountMinor      Int
+  currency         String           @default("NGN")
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, consultationType])
 }
 
 model ProviderSpecialty {
@@ -118,6 +189,7 @@ model AvailabilitySlot {
   provider     Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
   appointments Appointment[]
 
+  @@unique([providerId, start])
   @@index([providerId, start])
 }
 
@@ -127,11 +199,15 @@ model Appointment {
   providerId       String
   slotId           String
   consultationType ConsultationType
-  status           AppointmentStatus @default(SCHEDULED)
+  status           AppointmentStatus @default(PENDING_PAYMENT)
   reason           String
   notes            String?
   scheduledAt      DateTime
   durationMinutes  Int
+  amountMinor      Int
+  currency         String            @default("NGN")
+  holdExpiresAt    DateTime?
+  confirmedAt      DateTime?
   createdAt        DateTime          @default(now())
   cancelledAt      DateTime?
   cancelReason     String?
@@ -140,10 +216,36 @@ model Appointment {
   provider  Provider         @relation(fields: [providerId], references: [id], onDelete: Cascade)
   slot      AvailabilitySlot @relation(fields: [slotId], references: [id])
   documents Document[]
+  payments  Payment[]
 
   @@index([patientId, scheduledAt])
   @@index([providerId, scheduledAt])
   @@index([slotId])
+  @@index([status, holdExpiresAt])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  appointmentId     String
+  patientId         String
+  reference         String        @unique
+  providerReference String?
+  amountMinor       Int
+  currency          String        @default("NGN")
+  status            PaymentStatus @default(PENDING)
+  refundStatus      RefundStatus  @default(NOT_REQUIRED)
+  authorizationUrl  String?
+  accessCode        String?
+  paidAt            DateTime?
+  verifiedAt        DateTime?
+  failureReason     String?
+  createdAt         DateTime      @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
+  @@index([status])
 }
 
 model Document {
@@ -168,12 +270,13 @@ model Document {
 }
 
 model Conversation {
-  id                 String   @id
-  patientId          String
-  providerId         String
-  lastMessageAt      DateTime
-  lastMessagePreview String
-  unreadCount        Int      @default(0)
+  id                  String   @id
+  patientId           String
+  providerId          String
+  lastMessageAt       DateTime
+  lastMessagePreview  String
+  patientUnreadCount  Int      @default(0)
+  providerUnreadCount Int      @default(0)
 
   patient  Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
   provider Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
@@ -181,6 +284,7 @@ model Conversation {
 
   @@unique([patientId, providerId])
   @@index([patientId, lastMessageAt])
+  @@index([providerId, lastMessageAt])
 }
 
 model ChatMessage {

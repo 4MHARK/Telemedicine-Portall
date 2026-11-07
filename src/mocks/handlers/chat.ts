@@ -1,45 +1,20 @@
-// The provider's reply lands on a ~1.5s timer, so the client's 3s poll is what
-// actually delivers it.
+// The mock persists messages; a doctor sends replies through the same endpoint
+// the real API exposes. No simulated reply timer exists in the live contract.
 import { http, HttpResponse } from 'msw'
 
 import type { ChatMessage } from '@/types'
-import { conversations, messages, providers } from '../db'
-import { apiError, authenticate, latency, readJson } from './shared'
+import { conversations, messages } from '../db'
+import { apiError, authenticate, latency, patientIdOf, providerIdOf, readJson } from './shared'
 
-const PROVIDER_REPLY_DELAY_MS = 1500
-
-const PROVIDER_REPLIES = [
-  'Thanks for the update — that is helpful.',
-  'Understood. Keep an eye on it and let me know if anything changes.',
-  'That sounds reasonable. We can review it at your next appointment.',
-  'Noted. I will add that to your record.',
-  'Good question — the short answer is yes, keep doing what you are doing.',
-] as const
-
-let replySequence = 0
 let createdMessages = 0
 
-function appendProviderReply(conversationId: string, providerId: string): void {
-  const conversation = conversations.find((c) => c.id === conversationId)
-  if (!conversation) return
-
-  const reply = PROVIDER_REPLIES[replySequence % PROVIDER_REPLIES.length] ?? 'Noted.'
-  replySequence += 1
-  createdMessages += 1
-
-  const sentAt = new Date().toISOString()
-  messages.push({
-    id: `msg_new_${createdMessages}`,
-    conversationId,
-    senderId: providerId,
-    senderRole: 'provider',
-    body: reply,
-    sentAt,
-    status: 'delivered',
-  })
-
-  conversation.lastMessageAt = sentAt
-  conversation.lastMessagePreview = reply.slice(0, 80)
+function canAccess(
+  conversation: { patientId: string; providerId: string },
+  session: Parameters<typeof patientIdOf>[0],
+): boolean {
+  if (session.patient) return conversation.patientId === session.patient.id
+  if (session.provider) return conversation.providerId === session.provider.id
+  return false
 }
 
 export const chatHandlers = [
@@ -51,7 +26,7 @@ export const chatHandlers = [
     if (!auth.ok) return auth.response
 
     const result = conversations
-      .filter((c) => c.patientId === auth.patientId)
+      .filter((c) => canAccess(c, auth.session))
       .sort((a, b) => Date.parse(b.lastMessageAt) - Date.parse(a.lastMessageAt))
 
     return HttpResponse.json(result)
@@ -67,16 +42,12 @@ export const chatHandlers = [
     const conversationId = String(params.id)
     const conversation = conversations.find((c) => c.id === conversationId)
     if (!conversation) return apiError(404, 'NOT_FOUND', 'Conversation not found.')
-    if (conversation.patientId !== auth.patientId) {
-      return apiError(403, 'FORBIDDEN', 'This conversation belongs to another patient.')
+    if (!canAccess(conversation, auth.session)) {
+      return apiError(403, 'FORBIDDEN', 'This conversation belongs to someone else.')
     }
-
-    const after = new URL(request.url).searchParams.get('after')
-    const afterMs = after ? Date.parse(after) : Number.NaN
 
     const result = messages
       .filter((m) => m.conversationId === conversationId)
-      .filter((m) => (Number.isNaN(afterMs) ? true : Date.parse(m.sentAt) > afterMs))
       .sort((a, b) => Date.parse(a.sentAt) - Date.parse(b.sentAt))
 
     return HttpResponse.json(result)
@@ -92,8 +63,8 @@ export const chatHandlers = [
     const conversationId = String(params.id)
     const conversation = conversations.find((c) => c.id === conversationId)
     if (!conversation) return apiError(404, 'NOT_FOUND', 'Conversation not found.')
-    if (conversation.patientId !== auth.patientId) {
-      return apiError(403, 'FORBIDDEN', 'This conversation belongs to another patient.')
+    if (!canAccess(conversation, auth.session)) {
+      return apiError(403, 'FORBIDDEN', 'This conversation belongs to someone else.')
     }
 
     const parsed = await readJson<{ body?: unknown }>(request)
@@ -107,13 +78,14 @@ export const chatHandlers = [
       })
     }
 
+    const isPatient = Boolean(auth.session.patient)
     createdMessages += 1
     const sentAt = new Date().toISOString()
     const message: ChatMessage = {
       id: `msg_new_${createdMessages}`,
       conversationId,
-      senderId: auth.patientId,
-      senderRole: 'patient',
+      senderId: isPatient ? patientIdOf(auth.session) : providerIdOf(auth.session),
+      senderRole: isPatient ? 'patient' : 'provider',
       body: text,
       sentAt,
       status: 'sent',
@@ -122,15 +94,6 @@ export const chatHandlers = [
     messages.push(message)
     conversation.lastMessageAt = sentAt
     conversation.lastMessagePreview = text.slice(0, 80)
-
-    // The provider's reply lands after the client has already returned; the
-    // next poll is what surfaces it.
-    if (providers.some((p) => p.id === conversation.providerId)) {
-      setTimeout(
-        () => appendProviderReply(conversationId, conversation.providerId),
-        PROVIDER_REPLY_DELAY_MS,
-      )
-    }
 
     return HttpResponse.json(message, { status: 201 })
   }),

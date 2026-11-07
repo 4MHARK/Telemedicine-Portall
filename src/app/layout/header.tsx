@@ -24,13 +24,23 @@ export function Header() {
   const { theme, toggleTheme } = useTheme()
   const { session } = useAuth()
   const patient = session?.patient
+  const provider = session?.provider
+  const account = session?.account
+  const displayName = patient
+    ? `${patient.firstName} ${patient.lastName}`
+    : provider
+      ? `${provider.title} ${provider.firstName} ${provider.lastName}`
+      : null
+  const avatarUrl = patient?.avatarUrl ?? provider?.avatarUrl
+  const homeHref = account?.role === 'doctor' ? '/provider' : '/doctors'
+  const profileHref = account?.role === 'doctor' ? '/provider/profile' : '/profile'
   const isDark = theme === 'dark'
 
   return (
     <header className="border-border bg-surface/95 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-4 px-4 lg:px-6">
         <Link
-          to="/doctors"
+          to={homeHref}
           className="flex items-center gap-2 font-semibold tracking-tight"
           aria-label="Telemedicine Portal home"
         >
@@ -57,18 +67,24 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={patient ? `Account menu for ${patient.firstName}` : 'Account menu'}
+                  aria-label={displayName ? `Account menu for ${displayName}` : 'Account menu'}
                 />
               }
             >
-              {patient ? (
-                <img
-                  src={patient.avatarUrl}
-                  alt=""
-                  className="size-7 rounded-full"
-                  width={28}
-                  height={28}
-                />
+              {displayName ? (
+                avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    className="size-7 rounded-full"
+                    width={28}
+                    height={28}
+                  />
+                ) : (
+                  <span className="bg-primary text-primary-fg grid size-7 place-items-center rounded-full text-xs">
+                    {displayName.slice(0, 1)}
+                  </span>
+                )
               ) : (
                 <span className="bg-surface-muted text-text-muted grid size-7 place-items-center rounded-full text-xs">
                   <LogIn className="size-3.5" />
@@ -77,18 +93,16 @@ export function Header() {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="w-56">
-              {patient ? (
+              {displayName ? (
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>
-                    <span className="block font-medium">
-                      {patient.firstName} {patient.lastName}
-                    </span>
+                    <span className="block font-medium">{displayName}</span>
                     <span className="text-text-muted block text-xs font-normal">
-                      {patient.email}
+                      {account?.email}
                     </span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem render={<Link to="/profile" />}>Profile</DropdownMenuItem>
+                  <DropdownMenuItem render={<Link to={profileHref} />}>Profile</DropdownMenuItem>
                 </DropdownMenuGroup>
               ) : (
                 <DropdownMenuGroup>

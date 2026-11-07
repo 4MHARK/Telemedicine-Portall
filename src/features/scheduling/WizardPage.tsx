@@ -17,6 +17,7 @@ import { useCreateAppointment } from '@/features/appointments'
 import { useProvider, useProviderSlots } from '@/features/providers'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { ApiError } from '@/lib/apiClient'
+import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { STEP_FIELDS, STEP_LABELS, wizardSchema } from './schemas'
 import type { WizardValues } from './schemas'
@@ -68,6 +69,10 @@ function WizardContent({ providerId }: { providerId: string }) {
   const providerName = provider.data
     ? `${provider.data.title} ${provider.data.firstName} ${provider.data.lastName}`
     : 'Provider'
+  const selectedFee = provider.data?.fees.find(
+    (fee) => fee.consultationType === values.consultationType,
+  )
+  const feeLabel = selectedFee ? formatMoney(selectedFee.amountMinor, selectedFee.currency) : null
 
   // Leaving mid-wizard
   const isDirty = form.formState.isDirty
@@ -81,7 +86,7 @@ function WizardContent({ providerId }: { providerId: string }) {
     // effect, so navigating now would still hit the stale one and pop the
     // unsaved-changes dialog.
     const timer = setTimeout(() => {
-      void navigate(`/appointments/${bookedId}`, { replace: true })
+      void navigate(`/checkout/${bookedId}`, { replace: true })
     }, 0)
     return () => clearTimeout(timer)
   }, [bookedId, navigate])
@@ -212,6 +217,7 @@ function WizardContent({ providerId }: { providerId: string }) {
             values={values}
             providerName={providerName}
             slotStart={selectedSlot?.start ?? null}
+            feeLabel={feeLabel}
             confirming={step === LAST_STEP}
             onEdit={(target) => dispatch({ type: 'GOTO', step: target })}
           />

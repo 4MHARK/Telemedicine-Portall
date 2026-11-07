@@ -1,22 +1,16 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-import { readSession, SESSION_STORAGE_KEY } from '@/lib/session'
 import { renderApp } from '../render-app'
 
 describe('auth', () => {
-  beforeEach(() => window.localStorage.clear())
-
-  it('signing in stores the session and lands on the doctors list', async () => {
+  it('signing in lands on the doctors list', async () => {
     const { router } = renderApp('/auth/login')
 
     await userEvent.type(await screen.findByLabelText('Email'), 'nadia@example.com')
     await userEvent.type(screen.getByLabelText('Password'), 'demo')
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
-
-    await waitFor(() => expect(readSession()).not.toBeNull())
-    expect(readSession()?.patient.firstName).toBe('Nadia')
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/doctors'))
     expect(await screen.findByRole('heading', { name: 'Find a doctor' })).toBeInTheDocument()
@@ -29,7 +23,6 @@ describe('auth', () => {
 
     expect(await screen.findByText('Enter your email address.')).toBeInTheDocument()
     expect(screen.getByText('Enter your password.')).toBeInTheDocument()
-    expect(window.localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
   })
 
   it('unauthenticated /documents redirects to login carrying ?next', async () => {

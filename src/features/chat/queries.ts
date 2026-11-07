@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { useAuth } from '@/features/auth'
 import { queryKeys } from '@/lib/queryKeys'
-import { readSession } from '@/lib/session'
 import type { ChatMessage } from '@/types'
 import { fetchConversations, fetchMessages, sendMessage } from './api'
 import { mergeMessages } from './mergeMessages'
@@ -39,7 +39,10 @@ export function useMessages(conversationId: string) {
 // mark it 'failed' (and keep the text) on error.
 export function useSendMessage(conversationId: string) {
   const queryClient = useQueryClient()
+  const { session } = useAuth()
   const key = queryKeys.chat.messages(conversationId)
+  const senderId = session?.patient?.id ?? session?.provider?.id ?? ''
+  const senderRole = session?.account.role === 'doctor' ? 'provider' : 'patient'
 
   return useMutation({
     mutationFn: (body: string) => sendMessage(conversationId, body),
@@ -51,8 +54,8 @@ export function useSendMessage(conversationId: string) {
       const optimistic: ChatMessage = {
         id: `local_${crypto.randomUUID()}`,
         conversationId,
-        senderId: readSession()?.patient.id ?? 'pat_01',
-        senderRole: 'patient',
+        senderId,
+        senderRole,
         body,
         sentAt: new Date().toISOString(),
         status: 'sending',

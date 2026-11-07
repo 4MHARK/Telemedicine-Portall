@@ -63,6 +63,68 @@ jobs:
           path: coverage/
           retention-days: 7
 
+  server:
+    name: Server tests and smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: telemedicine_app
+          POSTGRES_PASSWORD: telemedicine_test
+          POSTGRES_DB: telemedicine_portal_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U telemedicine_app -d telemedicine_portal_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://telemedicine_app:telemedicine_test@127.0.0.1:5432/telemedicine_portal_test?schema=public
+      DIRECT_URL: postgresql://telemedicine_app:telemedicine_test@127.0.0.1:5432/telemedicine_portal_test?schema=public
+      SEED_SECRET: ci-seed-secret
+      APP_ORIGIN: http://localhost:5173
+      CORS_ORIGIN: http://localhost:5173
+      PAYSTACK_FAKE: 'true'
+      PORT: '3001'
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Migrate and seed
+        run: npx prisma migrate deploy && npm run seed
+
+      - name: Server tests
+        run: npm run test:server
+
+      - name: Build
+        run: npm run build
+
+      - name: Smoke
+        run: |
+          node dist/index.js &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3001/health && break
+            sleep 1
+          done
+          npm run smoke
+
+      - name: Production audit
+        run: npm audit --omit=dev
+
   e2e:
     name: Playwright
     runs-on: ubuntu-latest

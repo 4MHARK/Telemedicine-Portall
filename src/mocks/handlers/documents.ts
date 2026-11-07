@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Document } from '@/types'
 import { appointments, documents } from '../db'
-import { apiError, authenticate, latency } from './shared'
+import { apiError, authenticate, latency, patientIdOf } from './shared'
 
 const MAX_BYTES = 10 * 1024 * 1024
 const ALLOWED_MIME_TYPES = ['application/pdf', 'image/png', 'image/jpeg'] as const
@@ -38,7 +38,7 @@ export const documentHandlers = [
     if (!auth.ok) return auth.response
 
     const result = documents
-      .filter((d) => d.patientId === auth.patientId)
+      .filter((d) => d.patientId === patientIdOf(auth.session))
       .sort((a, b) => Date.parse(b.uploadedAt ?? '') - Date.parse(a.uploadedAt ?? ''))
 
     return HttpResponse.json(result)
@@ -80,7 +80,7 @@ export const documentHandlers = [
     if (typeof appointmentId === 'string' && appointmentId) {
       const appointment = appointments.find((a) => a.id === appointmentId)
       if (!appointment) return apiError(404, 'NOT_FOUND', 'Appointment not found.')
-      if (appointment.patientId !== auth.patientId) {
+      if (appointment.patientId !== patientIdOf(auth.session)) {
         return apiError(403, 'FORBIDDEN', 'This appointment belongs to another patient.')
       }
     }
@@ -96,7 +96,7 @@ export const documentHandlers = [
 
     const document: Document = {
       id: `doc_new_${created}`,
-      patientId: auth.patientId,
+      patientId: patientIdOf(auth.session),
       ...(typeof appointmentId === 'string' && appointmentId ? { appointmentId } : {}),
       fileName: file.name,
       mimeType: file.type,
@@ -118,7 +118,7 @@ export const documentHandlers = [
 
     const index = documents.findIndex((d) => d.id === String(params.id))
     if (index === -1) return apiError(404, 'NOT_FOUND', 'Document not found.')
-    if (documents[index]?.patientId !== auth.patientId) {
+    if (documents[index]?.patientId !== patientIdOf(auth.session)) {
       return apiError(403, 'FORBIDDEN', 'This document belongs to another patient.')
     }
 

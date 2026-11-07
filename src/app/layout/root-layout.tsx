@@ -27,6 +27,16 @@ export function RootLayout({ children, currentPath }: RootLayoutProps) {
 
       <Header />
 
+      {import.meta.env.VITE_ENABLE_MOCKS === 'true' ? (
+        <div
+          role="status"
+          className="bg-warning/10 text-warning border-warning/30 border-b px-4 py-2 text-center text-xs"
+        >
+          Mock data mode: bookings, payments, and doctor accounts are simulated in this browser tab.
+          Unset VITE_ENABLE_MOCKS and restart to use the live API.
+        </div>
+      ) : null}
+
       <div className="flex flex-1">
         <SideNav currentPath={pathname} />
         <IconRail currentPath={pathname} />

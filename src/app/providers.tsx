@@ -1,27 +1,16 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { UnheadProvider, createHead } from '@unhead/react/client'
 import { ErrorBoundary } from 'react-error-boundary'
 import type { FallbackProps } from 'react-error-boundary'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { ApiError } from '@/lib/apiClient'
 import { AuthProvider } from '@/features/auth'
 // Direct import: the barrel re-exports DocumentsPage, which would break splitting.
 import { UploadProvider } from '@/features/documents/UploadProvider'
 import { ThemeProvider } from '@/features/theme'
+import { queryClient } from '@/lib/queryClient'
 
-// One cache and one head per app. Stale times are set per query.
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Don't retry 4xx — a 404 won't fix itself.
-      retry: (failureCount, error) =>
-        !(error instanceof ApiError && error.status >= 400 && error.status < 500) &&
-        failureCount < 2,
-    },
-  },
-})
 const head = createHead()
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
